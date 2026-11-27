@@ -358,6 +358,11 @@ function buildRelease(dir) {
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('newtab-creatures', true)))
   for (const t of [...tabs.map((t) => t.page), blank]) await t.close()
 
+  /* chrome theme status (not installed in this browser) */
+  await settings.click('#updates .sec-toggle')
+  await wait(400)
+  ok('hub says when the Chrome theme isn’t installed', /Not installed/.test(await settings.textContent('#theme-row .row-desc')))
+
   /* updater */
   const upd = await page('updates.html')
   ok('updates page lives at …/updates.html', upd.url().endsWith('/updates.html'))
@@ -438,6 +443,43 @@ function buildRelease(dir) {
 
   ok('no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
+
+  /* chrome theme status with an out-of-date theme loaded beside the extension */
+  {
+    const themeCopy = path.join(tmp, 'theme-old')
+    fs.cpSync(path.join(EXT, 'theme'), themeCopy, { recursive: true })
+    const tm = JSON.parse(fs.readFileSync(path.join(themeCopy, 'manifest.json'), 'utf8'))
+    tm.version = '1.0.0'
+    fs.writeFileSync(path.join(themeCopy, 'manifest.json'), JSON.stringify(tm))
+    const prof2 = path.join(tmp, 'profile2')
+    fs.mkdirSync(path.join(prof2, 'Default'), { recursive: true })
+    fs.writeFileSync(path.join(prof2, 'Default/Preferences'), JSON.stringify({ extensions: { ui: { developer_mode: true } } }))
+    const ctx2 = await chromium.launchPersistentContext(prof2, {
+      headless: true,
+      channel: 'chromium',
+      ignoreDefaultArgs: ['--disable-extensions'],
+      args: [`--disable-extensions-except=${EXT},${themeCopy}`, `--load-extension=${EXT},${themeCopy}`],
+    })
+    let [sw2] = ctx2.serviceWorkers()
+    if (!sw2) sw2 = await ctx2.waitForEvent('serviceworker')
+    const hub2 = await ctx2.newPage()
+    await hub2.goto(`chrome-extension://${new URL(sw2.url()).host}/yash.html`)
+    await wait(1200)
+    const stale = await hub2.textContent('#theme-row .row-desc')
+    const count = await hub2.textContent('#updates-count')
+    ok('hub says when the Chrome theme needs its reload arrow', /1\.0\.0 is loaded/.test(stale) && /theme needs a reload/.test(count), `${stale} | ${count}`)
+    const themeId = await hub2.evaluate(async () => (await chrome.management.getAll()).find((e) => e.type === 'theme').id)
+    await hub2.evaluate((id) => chrome.management.setEnabled(id, false), themeId)
+    await wait(800)
+    const off = await hub2.textContent('#theme-row .row-desc')
+    await hub2.click('#updates .sec-toggle')
+    await wait(300)
+    await hub2.click('#theme-row button')
+    await wait(800)
+    const backOn = await hub2.evaluate(async (id) => (await chrome.management.get(id)).enabled, themeId)
+    ok('a switched-off theme is noticed, and one click switches it back on', /switched off/.test(off) && backOn, off)
+    await ctx2.close()
+  }
   fs.rmSync(tmp, { recursive: true, force: true })
   console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
   process.exit(failed ? 1 : 0)

@@ -5,6 +5,7 @@ import { VISIBLE_GROUPS as GROUPS, inGroup } from '../core/features.js'
 import { enabledMap, setEnabled } from '../core/settings.js'
 import { getConfig, getState, newer, currentVersion, UPDATES_PAGE } from '../updater/updater.js'
 import { openProblems, report } from '../core/health.js'
+import { mountThemeRow } from './theme-status.js'
 
 const $ = (id) => document.getElementById(id)
 const openUpdates = () => chrome.tabs.create({ url: chrome.runtime.getURL(UPDATES_PAGE) })
@@ -162,13 +163,17 @@ async function syncSwitches() {
 
 /* ---------- updates & source ---------- */
 
+const themeState = mountThemeRow($('theme-row'))
+
 async function renderUpdates() {
   const s = await getState()
   const c = await getConfig()
   const v = currentVersion()
   const waiting = s.latest && newer(s.latest, v)
   $('update-banner').hidden = !waiting
-  $('updates-count').textContent = waiting ? `${s.latest} ready` : c.repo ? `v${v} · up to date` : `v${v}`
+  const theme = await themeState
+  const themeNote = theme && theme.state !== 'ok' ? (theme.state === 'stale' ? ' · theme needs a reload' : theme.state === 'off' ? ' · theme is off' : ' · theme not installed') : ''
+  $('updates-count').textContent = (waiting ? `${s.latest} ready` : c.repo ? `v${v} · up to date` : `v${v}`) + themeNote
   if (waiting) {
     $('update-title').textContent = `Version ${s.latest} is ready`
     $('upd-title').textContent = `Version ${v} · ${s.latest} is ready`
