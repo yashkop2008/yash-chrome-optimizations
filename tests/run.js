@@ -115,6 +115,15 @@ function buildRelease(dir) {
   ok('the arrow opens a group', await settings.isVisible('#youtube .group'))
   const regs = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id))
   ok('content scripts registered per feature', regs.length === 3, regs.join(', '))
+  // Flip the YouTube group off and on in quick bursts, as the "All" switch does.
+  const burst = await settings.evaluate(async () => {
+    const m = await import('../core/settings.js')
+    const ids = ['youtube-gate', 'youtube-feeds', 'youtube-fresh-feed']
+    for (let i = 0; i < 6; i++) await Promise.all(ids.map((id) => m.setEnabled(id, i % 2 === 1)))
+    await new Promise((r) => setTimeout(r, 1500))
+    return (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id).sort()
+  })
+  ok('rapid switching leaves exactly the right scripts registered', burst.join() === regs.slice().sort().join(), burst.join(', '))
 
   /* gate */
   const yt = await ctx.newPage()

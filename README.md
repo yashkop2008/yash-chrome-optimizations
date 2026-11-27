@@ -6,21 +6,12 @@ and the extension updates itself from this repository with one click.
 
 ## Features
 
-Clicking the toolbar icon opens the hub: every feature, grouped, each with its own
-switch and (while on) its own controls.
+Click the toolbar icon to open the hub. Each group folds to one line with its own switch.
 
-| Group | Feature | What it does |
-| --- | --- | --- |
-| YouTube | YouTube gate | Opening YouTube lands on a gate: go back to work, park the urge for later, search one thing with recommendations hidden, or hold to fall in for a timed pass (the hold gets longer each time). |
-| YouTube | Cats or Fern feed | Swap the home page for only cat videos or only videos by [Fern](https://www.youtube.com/@fern-tv). |
-| YouTube | Fresh home feed | Videos you looked at on the home page and didn't click are hidden the next time. |
-| Address bar | Forget one-time searches | Searches you make once are dropped from history so they never come back as suggestions; searches you repeat (2 or 3 times, your choice) stay. One button cleans up everything already there. |
-| Address bar | Just the site, not every page | For sites you list (YouTube by default), history keeps only the home page, so typing “you” suggests youtube.com instead of old videos and channels. |
-| Address bar | Hide Google's live suggestions | Off by default. Chrome only allows these all or nothing. |
-
-The address bar features work by curating Chrome's history, because that is what the
-dropdown suggests from; extensions can't edit the dropdown itself. Removed entries are
-also gone from `chrome://history`.
+| Group | What it does |
+| --- | --- |
+| YouTube | A gate instead of the home page (back to work, park the urge, search one thing, or hold to fall in for a timed pass), a home feed that hides what you skipped, and a cats-only or Fern-only feed. |
+| Address bar | Keeps the dropdown to what you actually revisit: one-time searches and old YouTube videos and channels are dropped from history. Google's live suggestions can be switched off. |
 
 ## Install (once)
 
