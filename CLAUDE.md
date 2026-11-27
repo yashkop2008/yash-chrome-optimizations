@@ -34,3 +34,13 @@ they dislike about Chrome or websites; each fix becomes a feature here.
 a fake YouTube and a fake GitHub and prints PASS/FAIL per check. Add checks for new
 features there. The real youtube.com is usually not reachable from cloud sessions, so
 fake pages must mirror the real page structure (e.g. `ytInitialData`).
+
+`node tests/omnibox.js` checks what the address bar really suggests, using Chromium's
+own suggestion engine (`chrome://omnibox`), across a fresh install, an update from an
+older version (files written, then `chrome.runtime.reload()`, as the updater does) and
+a restart without an update event. Run it for any change to the address bar features;
+reading `chrome.history` alone has missed real bugs.
+
+Don't rely on `chrome.runtime.onInstalled` for one-time work: Chrome doesn't always
+deliver it (e.g. a restart with new files on disk). Do it when the background wakes,
+guarded by a timestamp in storage.

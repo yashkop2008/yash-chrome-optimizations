@@ -18,21 +18,33 @@ chrome.history.onVisited.addListener(async (item) => {
 })
 
 chrome.alarms.onAlarm.addListener(async (a) => {
-  if (a.name === ALARM && (await isEnabled(FEATURE))) sweepRecent(2)
+  if (a.name !== ALARM || !(await isEnabled(FEATURE))) return
+  await sweepRecent(2)
+  await ensureFullSweep()
 })
 
-async function start() {
-  chrome.alarms.create(ALARM, { periodInMinutes: 30 })
-  if (await isEnabled(FEATURE)) {
-    const { sitePagesSweptAll } = await chrome.storage.local.get('sitePagesSweptAll')
-    if (!sitePagesSweptAll) {
-      await sweepAll()
-      await chrome.storage.local.set({ sitePagesSweptAll: true })
-    }
-  }
+// A full sweep whenever the background wakes and the last one is more than
+// six hours old. Deliberately not tied to install/update events: Chrome
+// doesn't always deliver those (for example when it restarts with new files
+// on disk), and a missed sweep is exactly how old videos stayed suggested.
+const FULL_EVERY_MS = 6 * 60 * 60 * 1000
+let fullSweep = null
+
+async function ensureFullSweep() {
+  if (fullSweep) return fullSweep
+  fullSweep = (async () => {
+    chrome.alarms.get(ALARM).then((a) => a || chrome.alarms.create(ALARM, { periodInMinutes: 30 }))
+    if (!(await isEnabled(FEATURE))) return
+    const { sitePagesLastFull = 0 } = await chrome.storage.local.get('sitePagesLastFull')
+    if (Date.now() - sitePagesLastFull < FULL_EVERY_MS) return
+    await sweepAll()
+    await chrome.storage.local.set({ sitePagesLastFull: Date.now(), sitePagesSweptAll: true })
+  })().finally(() => (fullSweep = null))
+  return fullSweep
 }
-chrome.runtime.onInstalled.addListener(start)
-chrome.runtime.onStartup.addListener(start)
+ensureFullSweep()
+chrome.runtime.onInstalled.addListener(ensureFullSweep)
+chrome.runtime.onStartup.addListener(ensureFullSweep)
 
 chrome.storage.onChanged.addListener(async (changes) => {
   if ('features' in changes) {
@@ -40,7 +52,7 @@ chrome.storage.onChanged.addListener(async (changes) => {
     const after = changes.features.newValue?.[FEATURE]
     if (after === true && before !== true) {
       await sweepAll()
-      await chrome.storage.local.set({ sitePagesSweptAll: true })
+      await chrome.storage.local.set({ sitePagesLastFull: Date.now(), sitePagesSweptAll: true })
     }
   }
   if ('sitePages' in changes && (await isEnabled(FEATURE))) {

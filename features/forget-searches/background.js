@@ -10,15 +10,26 @@ chrome.history.onVisited.addListener(async (item) => {
   if (await isEnabled(FEATURE)) await onSearchVisit(item.url)
 })
 
-async function sweepOnce() {
-  if (!(await isEnabled(FEATURE))) return
-  const { searchSweptAll } = await chrome.storage.local.get('searchSweptAll')
-  if (searchSweptAll) return
-  await cleanUpPast()
-  await chrome.storage.local.set({ searchSweptAll: true })
+// Same rule for searches already in history: checked whenever the background
+// wakes (not only on install/update, which Chrome doesn't always report), at
+// most every six hours.
+const FULL_EVERY_MS = 6 * 60 * 60 * 1000
+let running = null
+
+async function ensureSwept() {
+  if (running) return running
+  running = (async () => {
+    if (!(await isEnabled(FEATURE))) return
+    const { searchLastFull = 0 } = await chrome.storage.local.get('searchLastFull')
+    if (Date.now() - searchLastFull < FULL_EVERY_MS) return
+    await cleanUpPast()
+    await chrome.storage.local.set({ searchLastFull: Date.now(), searchSweptAll: true })
+  })().finally(() => (running = null))
+  return running
 }
-chrome.runtime.onInstalled.addListener(sweepOnce)
-chrome.runtime.onStartup.addListener(sweepOnce)
+ensureSwept()
+chrome.runtime.onInstalled.addListener(ensureSwept)
+chrome.runtime.onStartup.addListener(ensureSwept)
 
 chrome.storage.onChanged.addListener(async (changes) => {
   if ('features' in changes) {
