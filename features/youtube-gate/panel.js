@@ -1,5 +1,5 @@
-// YouTube gate's section of the popup: running pass, today's numbers, the
-// parked list, and the hold-to-pause control.
+// YouTube gate's panel in the hub: running pass, today's numbers, the parked
+// list, and the hold-to-pause control.
 import { load, save, today, holdSecondsFor, passActive, pauseActive, clock, PAUSE_MINUTES } from './state.js'
 
 const PAUSE_HOLD_MS = 5000
@@ -14,7 +14,7 @@ function ago(ts) {
   return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`
 }
 
-export async function mount(box) {
+export async function mount(box, ctx = {}) {
   box.innerHTML = `
     <section class="pass" data-el="pass" hidden>
       <div>
@@ -49,7 +49,7 @@ export async function mount(box) {
     const now = Date.now()
     const passing = passActive(state, now)
     const paused = pauseActive(state, now)
-    window.hubSetStatus?.(
+    ctx.setStatus?.(
       paused ? `Paused · ${clock(state.pauseUntil - now)}` : passing ? 'In the hole' : 'Guarding',
       paused ? 'paused' : passing ? 'pass' : 'guard',
     )

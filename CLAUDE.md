@@ -5,14 +5,17 @@ they dislike about Chrome or websites; each fix becomes a feature here.
 
 ## Rules
 
-- **One fix = one feature** in `features/<id>/` plus one entry in `core/features.js`.
+- **One fix = one feature** in `features/<id>/` plus one entry in `core/features.js`,
+  inside a group (YouTube, Address bar, …). Related features share a group; the hub
+  (`settings/`, opened by the toolbar icon, no popup) shows one card per group.
   Every feature must be switchable off in Settings, and switched off means it does
   nothing (its content scripts aren't registered; background code checks `isEnabled`).
 - **Keep the UI consistent.** Use `core/tokens.css`: its tokens and components
   (`.btn-light` for the one primary action, `.btn-ghost`, `.btn-outline`, `.field`,
   `.hold`, `.switch`, `.pseg`, `.link`). Neutral greyscale; colour only for meaning
   (success, warning, error, attention); sentence-case labels, no uppercase micro-labels;
-  hairline borders; grouped settings-style lists (`.group` / `.row`). Pages get the
+  hairline borders; grouped settings-style lists (`.group` / `.row`); a feature's extra
+  controls go in its hub panel (`panel.js`, `.prow` rows). Pages get the
   `Yash's Chrome / <page>` header bar. UI injected into websites lives in a closed
   shadow root and follows the site's light/dark theme.
 - **Every change raises `version` in `manifest.json`.** The self-updater only compares

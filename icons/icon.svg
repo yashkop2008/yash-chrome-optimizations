@@ -1,7 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#000"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
   <rect width="128" height="128" rx="28" fill="#161616"/>
   <rect x="0.5" y="0.5" width="127" height="127" rx="27.5" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
-  <path d="M40 34 L64 64 L88 34" fill="none" stroke="#ededed" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M64 64 L64 96" fill="none" stroke="#ededed" stroke-width="11" stroke-linecap="round"/>
-  <circle cx="92" cy="92" r="7" fill="#ededed" fill-opacity="0.35"/>
+  <ellipse cx="64" cy="66" rx="50" ry="22" fill="none" stroke="#ededed" stroke-opacity="0.28" stroke-width="3"/>
+  <ellipse cx="64" cy="65" rx="36" ry="15.5" fill="none" stroke="#ededed" stroke-opacity="0.5" stroke-width="3.5"/>
+  <ellipse cx="64" cy="64" rx="23" ry="10" fill="none" stroke="#ededed" stroke-opacity="0.78" stroke-width="4"/>
+  <ellipse cx="64" cy="63.5" rx="12" ry="5.2" fill="#000"/>
+  <ellipse cx="64" cy="63.5" rx="12" ry="5.2" fill="none" stroke="#ededed" stroke-width="4"/>
 </svg>
