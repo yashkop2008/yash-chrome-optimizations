@@ -6,12 +6,14 @@ and the extension updates itself from this repository with one click.
 
 ## Features
 
-Click the toolbar icon to open the hub. Each group folds to one line with its own switch.
+Click the toolbar icon to open the hub. Each group folds to one line with its own switch,
+and ASCII fish and sharks ([ascii-sharks](https://github.com/stackedlol/ascii-sharks), MIT)
+swim in the empty space around it.
 
 | Group | What it does |
 | --- | --- |
 | YouTube | A gate instead of the home page (back to work, park the urge, search one thing, or hold to fall in for a timed pass), a home feed that hides what you skipped, and a cats-only or Fern-only feed. |
-| Address bar | Keeps the dropdown to what you actually revisit: one-time searches and old YouTube videos and channels are dropped from history. Google's live suggestions can be switched off. |
+| Address bar | Keeps the dropdown to what you actually revisit: one-time searches and old YouTube videos and channels are dropped from history, and (if you switch it on) so are pages you only opened once. Google's live suggestions can be switched off. |
 
 ## Install (once)
 

@@ -5,6 +5,7 @@ import { installUpdaterBackground } from './updater/updater.js'
 import './features/youtube-gate/background.js'
 import './features/forget-searches/background.js'
 import './features/site-pages/background.js'
+import './features/forget-pages/background.js'
 import './features/live-suggestions/background.js'
 
 installUpdaterBackground()

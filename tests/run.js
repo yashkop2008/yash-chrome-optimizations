@@ -106,9 +106,15 @@ function buildRelease(dir) {
   const settings = await page('settings/settings.html')
   await wait(800)
   ok('hub groups features: YouTube and Address bar', (await settings.locator('main .sec h2').allTextContents()).slice(0, 2).join('|') === 'YouTube|Address bar')
-  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 6 + 2)
+  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 7 + 2)
+  const fish = await settings.evaluate(() => {
+    const c = document.querySelector('.ocean')
+    const px = c.getContext('2d').getImageData(1, c.height - 2, 1, 1).data
+    return { clip: c.style.clipPath.startsWith('path(evenodd'), clicks: getComputedStyle(c).pointerEvents, corner: px[3] }
+  })
+  ok('hub fish: clipped to the empty space, never block clicks, no backdrop', fish.clip && fish.clicks === 'none' && fish.corner === 0, JSON.stringify(fish))
   ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 2 && !(await settings.isVisible('#youtube .group')))
-  ok('folded groups show how many features are on', (await settings.textContent('#address-bar .count')) === '2 of 3 on')
+  ok('folded groups show how many features are on', (await settings.textContent('#address-bar .count')) === '2 of 4 on')
   await settings.click('#youtube .sec-toggle')
   await settings.click('#address-bar .sec-toggle')
   await wait(300)
@@ -233,11 +239,11 @@ function buildRelease(dir) {
 
   /* live suggestions */
   const before = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
-  await settings.click('#address-bar .feature:nth-child(3) .switch')
+  await settings.click('#address-bar .feature:nth-child(4) .switch')
   await wait(800)
   const lv = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
   ok('live suggestions switch turns Google suggestions off', lv.value === false && lv.levelOfControl === 'controlled_by_this_extension', JSON.stringify(lv))
-  await settings.click('#address-bar .feature:nth-child(3) .switch')
+  await settings.click('#address-bar .feature:nth-child(4) .switch')
   await wait(800)
   const back = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
   ok('switching it off hands the setting back', back.value === before.value && back.levelOfControl !== 'controlled_by_this_extension')

@@ -99,6 +99,15 @@ export const FEATURES = [
     panel: 'features/site-pages/panel.js',
   },
   {
+    id: 'forget-pages',
+    group: 'address-bar',
+    name: 'Forget one-time pages',
+    summary:
+      'A page you only open once (a random post, a quiz) is dropped from history, so the dropdown only offers pages you come back to. Off by default: it removes a lot of history.',
+    enabled: false,
+    panel: 'features/forget-pages/panel.js',
+  },
+  {
     id: 'live-suggestions',
     group: 'address-bar',
     name: 'Hide Google’s live suggestions',

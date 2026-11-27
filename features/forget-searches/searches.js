@@ -49,7 +49,7 @@ export async function onSearchVisit(url) {
   const q = searchQuery(url)
   if (!q) return false
   const { keepAfter, counts, forgotten } = await settings()
-  const rec = counts[q] || { n: 0, t: 0 }
+  const rec = counts[q]?.live ? counts[q] : { n: 0, t: 0, live: true }
   if (Date.now() - rec.t > SAME_SEARCH_MS) rec.n += 1
   rec.t = Date.now()
   counts[q] = rec
@@ -60,6 +60,32 @@ export async function onSearchVisit(url) {
 }
 
 // Go through everything already in history once.
+// How many separate times a search was made, from the visit times Chrome
+// keeps. One search leaves several history entries (the address Chrome opens,
+// then the one Google rewrites it to, then filters or page 2), so counting
+// entries made one-time searches look repeated. Visits less than half an hour
+// apart are one occasion.
+const OCCASION_GAP_MS = 30 * 60 * 1000
+
+async function occasions(items) {
+  const times = []
+  for (const h of items) {
+    const visits = await chrome.history.getVisits({ url: h.url })
+    if (visits.length) times.push(...visits.map((v) => v.visitTime))
+    else if (h.lastVisitTime) times.push(h.lastVisitTime)
+  }
+  times.sort((a, b) => a - b)
+  let n = 0
+  let last = -Infinity
+  for (const t of times) {
+    if (t - last > OCCASION_GAP_MS) n++
+    last = t
+  }
+  return n
+}
+
+// Go through everything already in history: anything searched on fewer
+// occasions than the "keep after" number goes.
 export async function cleanUpPast() {
   const { keepAfter, counts, forgotten } = await settings()
   const byQuery = new Map()
@@ -71,13 +97,16 @@ export async function cleanUpPast() {
   }
   let removed = 0
   for (const [q, items] of byQuery) {
-    // A query's separate result URLs (different filters, pages) are one search.
-    const times = Math.max(items.length, ...items.map((h) => h.typedCount || 0), counts[q]?.n || 0)
+    // Counts written as searches happen are trusted; ones an older version
+    // derived from history (by counting entries) are not.
+    const live = counts[q]?.live ? counts[q].n : 0
+    const times = Math.max(await occasions(items), live)
     if (times < keepAfter) {
       for (const h of items) await chrome.history.deleteUrl({ url: h.url })
+      delete counts[q]
       removed++
     } else {
-      counts[q] = { n: Math.max(times, counts[q]?.n || 0), t: Math.max(...items.map((h) => h.lastVisitTime || 0)) }
+      counts[q] = { n: times, t: Math.max(...items.map((h) => h.lastVisitTime || 0)), live: true }
     }
   }
   await chrome.storage.local.set({ searchCounts: prune(counts), searchForgotten: forgotten + removed })

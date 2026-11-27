@@ -190,6 +190,116 @@ async function waitForSweep(ctx) {
     await ctx.close()
   }
 
+  /* 4. old one-time searches: each search left two entries (Chrome's URL + Google's rewrite) */
+  {
+    const dir = profile()
+    let ctx = await launch(dir)
+    const p = await ctx.newPage()
+    for (const q of ['what genre is daniel caesar', 'what time does king of prussia mall close']) {
+      const base = `https://www.google.com/search?q=${encodeURIComponent(q).replace(/%20/g, '+')}`
+      await p.goto(`${base}&sourceid=chrome&ie=UTF-8`)
+      await wait(300)
+      await p.goto(`${base}&sca_esv=abc123&ei=XYZ&ved=0`) // Google's own follow-up URL for the same search
+      await wait(300)
+    }
+    await ctx.close()
+    const searchRows = async (c, text) => {
+      await enableDebugPages(c)
+      const o = await c.newPage()
+      const all = await suggestions(o, text)
+      await o.close()
+      return [...new Set(all.filter((u) => /google\.com\/search\?q=/.test(u) && !/google\.com.*https?:/.test(u)).map((u) => decodeURIComponent(new URL(u).searchParams.get('q').replace(/\+/g, ' '))))].filter((q) => q !== text)
+    }
+    ctx = await launch(dir)
+    const before = await searchRows(ctx, 'what')
+    ok('one-time searches show up for "what" (the problem)', before.length === 2, before.join(' | '))
+    await ctx.close()
+    ctx = await launch(dir, EXT)
+    await waitForSweep(ctx)
+    await wait(3000)
+    const after = await searchRows(ctx, 'what')
+    ok('after install, one-time searches are gone', after.length === 0, after.join(' | '))
+    await ctx.close()
+  }
+
+  /* 4b. your path: 2.3.1's cleanup already ran and wrongly kept those searches; then the update */
+  {
+    const dir = profile()
+    const old = fs.mkdtempSync(path.join(os.tmpdir(), 'yco-231-'))
+    execFileSync('git', ['-C', EXT, 'archive', 'e5e5573', '-o', path.join(old, 'v.tar')])
+    execFileSync('tar', ['-xf', 'v.tar'], { cwd: old })
+    let ctx = await launch(dir)
+    const p = await ctx.newPage()
+    for (const q of ['what genre is daniel caesar', 'what is c++ used for finance']) {
+      const base = `https://www.google.com/search?q=${encodeURIComponent(q).replace(/%20/g, '+')}`
+      await p.goto(`${base}&sourceid=chrome&ie=UTF-8`)
+      await wait(300)
+      await p.goto(`${base}&sca_esv=abc123&ei=XYZ&ved=0`)
+      await wait(300)
+    }
+    await ctx.close()
+    const searchRows = async (c) => {
+      await enableDebugPages(c)
+      const o = await c.newPage()
+      const all = await suggestions(o, 'what')
+      await o.close()
+      return [...new Set(all.filter((u) => /google\.com\/search\?q=/.test(u) && !/google\.com.*https?:/.test(u)).map((u) => new URL(u).searchParams.get('q')))].filter((q) => q !== 'what')
+    }
+    ctx = await launch(dir, old)
+    let [sw] = ctx.serviceWorkers()
+    if (!sw) sw = await ctx.waitForEvent('serviceworker')
+    const id = new URL(sw.url()).host
+    await wait(4000)
+    const on231 = await searchRows(ctx)
+    ok('on 2.3.1, its cleanup ran and kept the one-time searches (the bug)', on231.length === 2, on231.join(' | '))
+    fs.cpSync(EXT, old, { recursive: true, filter: (p) => !p.includes(`${path.sep}.git`) })
+    const hub = await ctx.newPage()
+    await hub.goto(`chrome-extension://${id}/settings/settings.html`)
+    await hub.evaluate(() => chrome.runtime.reload()).catch(() => {})
+    await wait(6000)
+    const after = await searchRows(ctx)
+    ok('after updating from 2.3.1, they are gone', after.length === 0, after.join(' | '))
+    await ctx.close()
+  }
+
+  /* 5. one-time pages ("Forget one-time pages", off by default) */
+  {
+    const dir = profile()
+    let ctx = await launch(dir)
+    await ctx.route(/x\.com|arealme\.com|example\.org/, (r) => {
+      const u = new URL(r.request().url())
+      const title = u.hostname.includes('x.com') ? 'OriginAI on X: "what a young person should learn"' : u.hostname.includes('arealme') ? 'APM Test - What is your APM?' : 'Example'
+      r.fulfill({ contentType: 'text/html', body: `<title>${title}</title>` })
+    })
+    const p = await ctx.newPage()
+    for (const u of ['https://x.com/OriginAI/status/1', 'https://www.arealme.com/apm-actions-per-minute-test/en/', 'https://example.org/']) {
+      await p.goto(u)
+      await wait(300)
+    }
+    await ctx.close()
+    const pageRows = async (c, text) => {
+      await enableDebugPages(c)
+      const o = await c.newPage()
+      const all = await suggestions(o, text)
+      await o.close()
+      return [...new Set(all.filter((u) => /x\.com|arealme|example\.org/.test(u) && !/\.(com|org).*https?:/.test(u)).map((u) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')))]
+    }
+    ctx = await launch(dir, EXT)
+    const sw = await waitForSweep(ctx)
+    const before = await pageRows(ctx, 'what')
+    ok('one-time pages show up for "what" while the feature is off', before.length === 2, before.join(' | '))
+    await sw.evaluate(async () => {
+      const f = (await chrome.storage.local.get('features')).features || {}
+      await chrome.storage.local.set({ features: { ...f, 'forget-pages': true } })
+    })
+    await wait(3000)
+    const after = await pageRows(ctx, 'what')
+    ok('switched on, one-time pages are gone', after.length === 0, after.join(' | '))
+    const home = await pageRows(ctx, 'example')
+    ok('a site itself stays', home.some((u) => /example\.org\/?$/.test(u)), home.join(' | '))
+    await ctx.close()
+  }
+
   console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
   process.exit(failed ? 1 : 0)
 })()

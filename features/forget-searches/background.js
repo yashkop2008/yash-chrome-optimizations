@@ -20,10 +20,10 @@ async function ensureSwept() {
   if (running) return running
   running = (async () => {
     if (!(await isEnabled(FEATURE))) return
-    const { searchLastFull = 0 } = await chrome.storage.local.get('searchLastFull')
+    const { searchLastFull2: searchLastFull = 0 } = await chrome.storage.local.get('searchLastFull2')
     if (Date.now() - searchLastFull < FULL_EVERY_MS) return
     await cleanUpPast()
-    await chrome.storage.local.set({ searchLastFull: Date.now(), searchSweptAll: true })
+    await chrome.storage.local.set({ searchLastFull2: Date.now(), searchSweptAll: true })
   })().finally(() => (running = null))
   return running
 }
