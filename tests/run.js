@@ -198,29 +198,38 @@ function buildRelease(dir) {
   const ytHist = await hist('youtube.com')
   ok('youtube video pages are dropped, the site stays', !ytHist.some((u) => u.includes('watch')) && ytHist.some((u) => u === 'https://www.youtube.com/'), ytHist.join(' '))
 
-  /* clean-up of what was already there */
+  /* what was already in history goes automatically when the features switch on */
   await settings.evaluate(async () => {
-    // Seed "old" history with both features off, as if it predates them.
     const m = await import('../core/settings.js')
     await m.setEnabled('forget-searches', false)
     await m.setEnabled('site-pages', false)
     for (const u of ['https://www.google.com/search?q=restaurants+open+today', 'https://www.google.com/search?q=chipotle+thanksgiving', 'https://www.youtube.com/@moodafps', 'https://www.youtube.com/watch?v=OgZfZB1n7tc', 'https://example.org/keep-me'])
       await chrome.history.addUrl({ url: u })
-    await new Promise((r) => setTimeout(r, 300))
+  })
+  await wait(800)
+  ok('seeded history is there first', (await hist('chipotle')).length === 1 && (await hist('moodafps')).length === 1)
+  await settings.evaluate(async () => {
+    const m = await import('../core/settings.js')
     await m.setEnabled('forget-searches', true)
     await m.setEnabled('site-pages', true)
   })
-  await wait(800)
-  ok('seeded history is there before clean-up', (await hist('chipotle')).length === 1 && (await hist('moodafps')).length === 1)
-  await settings.click('#address-bar .feature:nth-child(1) .panel [data-el=clean]')
-  await wait(1200)
-  const searchResult = await settings.textContent('#address-bar .feature:nth-child(1) .panel [data-el=result]')
-  await settings.click('#address-bar .feature:nth-child(2) .panel [data-el=clean]')
-  await wait(1200)
+  await wait(2500)
   const after = await hist('')
-  ok('clean-up removes past one-time searches', !after.some((u) => /restaurants|chipotle/.test(u)) && /Removed 2/.test(searchResult), searchResult)
-  ok('clean-up removes past youtube pages, keeps other sites', !after.some((u) => /moodafps|OgZfZB1n7tc/.test(u)) && after.includes('https://example.org/keep-me'))
+  ok('old one-time searches go without pressing anything', !after.some((u) => /restaurants|chipotle/.test(u)))
+  ok('old youtube pages go without pressing anything, other sites stay', !after.some((u) => /moodafps|OgZfZB1n7tc/.test(u)) && after.includes('https://example.org/keep-me'))
+  ok('no clean-up buttons left in the address bar panels', (await settings.locator('#address-bar [data-el=clean]').count()) === 0)
   ok("the extension's own pages stay out of history", !after.some((u) => u.startsWith('chrome-extension://')))
+
+  /* pages opened through the gate */
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
+  await wait(800)
+  await yt.goto('https://www.youtube.com/feed/subscriptions').catch(() => {})
+  await wait(4500)
+  const gated = await hist('youtube.com')
+  ok('a page the gate opened in place of is swept too', !gated.some((u) => u.includes('/feed/')), gated.join(' '))
+  ok('the gate presents itself as YouTube', (await yt.title()) === 'YouTube')
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', false)))
+  await wait(600)
 
   /* live suggestions */
   const before = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))

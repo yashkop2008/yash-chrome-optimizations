@@ -261,6 +261,9 @@ h2 {
   min-height: 32px;
 }
 .prow + .prow,
+.stat {
+  margin: 10px 0 0;
+}
 .add + .prow,
 .suggest + .prow,
 .chips + .prow {

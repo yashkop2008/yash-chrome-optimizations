@@ -1,5 +1,6 @@
-// Hub panel: the list of sites, quick-add from your most visited, and a clean-up.
-import { getSites, normaliseSite, cleanUpPast } from './sites.js'
+// Hub panel: the list of sites and quick-add from your most visited. Old pages
+// are swept automatically (see background.js), so there's no button for it.
+import { getSites, normaliseSite } from './sites.js'
 import { hostOf } from '../../core/history.js'
 
 const X = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
@@ -20,13 +21,7 @@ export async function mount(box) {
     <div class="suggest" data-el="suggest" hidden>
       <span class="prow-desc">Your most visited:</span>
     </div>
-    <div class="prow">
-      <div class="prow-text">
-        <div class="prow-title">Pages already in history</div>
-        <div class="prow-desc" data-el="result">Removes old pages from these sites, keeping each home page.</div>
-      </div>
-      <button class="btn-outline" data-el="clean" type="button">Clean up</button>
-    </div>`
+    <p class="prow-desc stat" data-el="result"></p>`
   const el = Object.fromEntries([...box.querySelectorAll('[data-el]')].map((n) => [n.dataset.el, n]))
 
   async function setSites(sites) {
@@ -36,11 +31,7 @@ export async function mount(box) {
   async function add(site) {
     const sites = await getSites()
     if (!site || sites.includes(site)) return
-    await setSites([...sites, site])
-    // Adding a site should show up in the dropdown right away.
-    el.result.textContent = `Removing old ${site} pages…`
-    const removed = await cleanUpPast([site])
-    el.result.textContent = `Added ${site} and removed ${removed} old ${removed === 1 ? 'page' : 'pages'}.`
+    await setSites([...sites, site]) // the background sweeps its old pages right away
   }
 
   async function render() {
@@ -84,13 +75,16 @@ export async function mount(box) {
     el.input.value = ''
     await add(site)
   })
-  el.clean.addEventListener('click', async () => {
-    el.clean.disabled = true
-    el.result.textContent = 'Going through your history…'
-    const removed = await cleanUpPast()
-    el.result.textContent = `Removed ${removed} old ${removed === 1 ? 'page' : 'pages'}. Home pages kept.`
-    el.clean.disabled = false
+  const renderStat = async () => {
+    const { sitePagesForgotten = 0 } = await chrome.storage.local.get('sitePagesForgotten')
+    el.result.textContent = sitePagesForgotten
+      ? `${sitePagesForgotten} old ${sitePagesForgotten === 1 ? 'page' : 'pages'} removed so far. New ones go as you visit.`
+      : 'Old pages are removed automatically, including ones already in history.'
+  }
+  chrome.storage.onChanged.addListener((c) => {
+    if ('sitePages' in c) render()
+    if ('sitePagesForgotten' in c) renderStat()
   })
-  chrome.storage.onChanged.addListener((c) => 'sitePages' in c && render())
+  renderStat()
   render()
 }
