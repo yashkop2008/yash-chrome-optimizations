@@ -45,6 +45,9 @@ downloads the repo, writes the files into your folder and reloads. See
 
 ```
 manifest.json          one manifest for everything
+yash.html              the hub (toolbar icon, or type "yash" + Space in the address bar)
+youtube.html           the YouTube gate
+updates.html           the updates page
 background.js          service worker: registers enabled features, runs the updater
 core/
   features.js          the registry: groups, features, their scripts and hub panels
@@ -53,7 +56,7 @@ core/
   tokens.css           the design system and shared components (TasteCode-style)
 features/<id>/         one folder per feature: content scripts, background, pages, hub panel
 features/youtube-shared/corner.js   the hover panel shared by YouTube features
-settings/              the hub, opened by the toolbar icon (groups, switches, panels, updates)
+settings/              the hub's scripts and styles (groups, switches, panels, fish)
 updater/               self-updater, reusable in other extensions
 tests/run.js           end-to-end checks against fake YouTube and GitHub
 ```

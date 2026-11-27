@@ -5,7 +5,7 @@
 //    also puts the blinders on (no feed, no Shorts, no recommendations).
 // 3. When the pass ends, pause the video, say so, and hand back to the gate.
 ;(() => {
-  const GATE = chrome.runtime.getURL('features/youtube-gate/gate.html')
+  const GATE = chrome.runtime.getURL('youtube.html')
   let pass = null
   let host = null
   let ui = null

@@ -11,6 +11,8 @@
 
 const API = 'https://api.github.com'
 const KEY = 'updater' // chrome.storage.local key
+// Where the updates page is; override with "page" in config.json at build time.
+export const UPDATES_PAGE = 'updates.html'
 
 /* ---------------- settings & status ---------------- */
 
@@ -335,7 +337,7 @@ export function installUpdaterBackground({ everyMinutes = 360 } = {}) {
     const s = await getState()
     if (s.justInstalled && s.justInstalled === currentVersion()) {
       await patchState({ justInstalled: null })
-      chrome.tabs.create({ url: chrome.runtime.getURL('updater/updates.html#updated') })
+      chrome.tabs.create({ url: chrome.runtime.getURL(`${UPDATES_PAGE}#updated`) })
     }
     badge()
   })

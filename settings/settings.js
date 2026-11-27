@@ -3,10 +3,10 @@
 // while it's on, its panel (stats, lists, quick controls).
 import { VISIBLE_GROUPS as GROUPS, inGroup } from '../core/features.js'
 import { enabledMap, setEnabled } from '../core/settings.js'
-import { getConfig, getState, newer, currentVersion } from '../updater/updater.js'
+import { getConfig, getState, newer, currentVersion, UPDATES_PAGE } from '../updater/updater.js'
 
 const $ = (id) => document.getElementById(id)
-const openUpdates = () => chrome.tabs.create({ url: chrome.runtime.getURL('updater/updates.html') })
+const openUpdates = () => chrome.tabs.create({ url: chrome.runtime.getURL(UPDATES_PAGE) })
 
 $('ver').textContent = `v${currentVersion()}`
 $('ext-id').textContent = chrome.runtime.id
@@ -16,6 +16,7 @@ $('update-install').addEventListener('click', openUpdates)
 /* ---------- welcome (first install) ---------- */
 
 if (location.hash === '#welcome') $('welcome-card').hidden = false
+if (location.hash) history.replaceState(null, '', location.pathname)
 $('welcome-done').addEventListener('click', () => {
   $('welcome-card').hidden = true
   history.replaceState(null, '', location.pathname)

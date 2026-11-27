@@ -15,7 +15,7 @@ function gateRule() {
     priority: 1,
     action: {
       type: 'redirect',
-      redirect: { regexSubstitution: chrome.runtime.getURL('features/youtube-gate/gate.html') + '#\\0' },
+      redirect: { regexSubstitution: chrome.runtime.getURL('youtube.html') + '#\\0' },
     },
     condition: {
       regexFilter: '^https?://((www\\.|m\\.)?youtube\\.com|youtu\\.be)(/.*)?$',

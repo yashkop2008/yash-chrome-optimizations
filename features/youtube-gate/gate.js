@@ -4,9 +4,17 @@ const $ = (id) => document.getElementById(id)
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
 // Where you were headed. Only YouTube addresses are honoured.
+// The redirect brings the YouTube address after a #. It's kept for this tab
+// and wiped from the address bar, which then reads just …/youtube.html.
+const KEY = 'rh-target'
+if (location.hash.length > 1) {
+  sessionStorage.setItem(KEY, location.hash.slice(1))
+  history.replaceState(null, '', location.pathname)
+}
+
 function readTarget() {
   try {
-    const url = new URL(location.hash.slice(1))
+    const url = new URL(sessionStorage.getItem(KEY) || '')
     if (/^https?:$/.test(url.protocol) && /(^|\.)youtube\.com$|^youtu\.be$/.test(url.hostname)) return url
   } catch {}
   return null

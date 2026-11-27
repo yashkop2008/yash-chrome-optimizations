@@ -1,6 +1,8 @@
 import { getConfig, saveConfig, getState, check, currentVersion, getFolder, pickFolder, ensureWritable, install } from './updater.js'
 
 const $ = (id) => document.getElementById(id)
+const justUpdated = location.hash === '#updated'
+if (location.hash) history.replaceState(null, '', location.pathname)
 const me = chrome.runtime.getManifest()
 const form = $('config')
 let latest = null
@@ -48,7 +50,7 @@ async function refresh() {
     say(`Version ${r.latest} is ready to install.`, 'news')
     $('install').hidden = false
     $('install').textContent = `Install ${r.latest}`
-  } else if (location.hash === '#updated') {
+  } else if (justUpdated) {
     const s = await getState()
     say(`Updated${s.from ? ` from ${s.from}` : ''} to ${currentVersion()}. You're on the newest version.`, 'good')
   } else {

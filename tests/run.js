@@ -103,7 +103,7 @@ function buildRelease(dir) {
   /* hub & registration */
   const manifest = JSON.parse(fs.readFileSync(path.join(EXT, 'manifest.json'), 'utf8'))
   ok('toolbar icon opens the hub, not a popup', !manifest.action.default_popup)
-  const settings = await page('settings/settings.html')
+  const settings = await page('yash.html')
   await wait(800)
   ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'YouTube' && !(await settings.locator('#address-bar').count()))
   ok('header is just the name, no logo', !(await settings.locator('.bar img').count()))
@@ -144,7 +144,7 @@ function buildRelease(dir) {
   const yt = await ctx.newPage()
   await yt.goto('https://www.youtube.com/').catch(() => {})
   await wait(600)
-  ok('youtube.com lands on the gate', yt.url().includes('/features/youtube-gate/gate.html'))
+  ok('youtube.com lands on the gate', yt.url().endsWith('/youtube.html'), yt.url())
   await wait(1500)
   const spiders = await yt.evaluate(() => {
     const c = document.querySelector('.spiders')
@@ -233,13 +233,14 @@ function buildRelease(dir) {
   await wait(400)
 
   /* updater */
-  const upd = await page('updater/updates.html')
+  const upd = await page('updates.html')
+  ok('updates page lives at …/updates.html', upd.url().endsWith('/updates.html'))
   await wait(1500)
   const msg = await upd.textContent('#message')
   ok('updater finds the newer version in the repo', /9\.9\.9/.test(msg), msg)
   await shot(upd, 'updates')
   const result = await upd.evaluate(async () => {
-    const m = await import('./updater.js')
+    const m = await import('./updater/updater.js')
     const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('ext', { create: true })
     // A stand-in for the real folder: same updater id, so it's accepted.
     const u = await dir.getDirectoryHandle('updater', { create: true })

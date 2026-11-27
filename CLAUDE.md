@@ -28,6 +28,13 @@ they dislike about Chrome or websites; each fix becomes a feature here.
 - Ask Yash before any matter of taste (look, copy, behaviour) that isn't settled by the
   rules above; otherwise follow the existing patterns.
 
+## Addresses
+
+Pages live at the top level so the address bar stays short: `yash.html` (hub),
+`youtube.html` (gate), `updates.html`. Their scripts and styles stay in their folders.
+Anything passed in the address (the gate's destination, `#welcome`, `#updated`) is read
+once and then removed with `history.replaceState`. Only `youtube.html` is web-accessible.
+
 ## Look of Chrome itself
 
 `theme/` is a separate theme extension (Chrome won't mix a theme with other features).

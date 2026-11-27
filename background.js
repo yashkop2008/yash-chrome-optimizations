@@ -10,7 +10,7 @@ import './features/live-suggestions/background.js'
 
 installUpdaterBackground()
 
-const HUB = chrome.runtime.getURL('settings/settings.html')
+const HUB = chrome.runtime.getURL('yash.html')
 
 // Clicking the toolbar icon opens the hub, or brings it forward if it's open.
 async function openHub(hash = '') {
@@ -24,6 +24,10 @@ async function openHub(hash = '') {
   }
 }
 chrome.action.onClicked.addListener(() => openHub())
+
+// Type "yash", then Space or Tab, then Enter in the address bar.
+chrome.omnibox.setDefaultSuggestion({ description: "Open Yash's Chrome" })
+chrome.omnibox.onInputEntered.addListener(() => openHub())
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   await syncContentScripts()
