@@ -343,6 +343,34 @@ function buildRelease(dir) {
     for (let i = 0; i < 60 * 25; i++) pond.world.step(1 / 60)
     const left = pond.world.food.length
     pond.destroy()
+    // Once the food is gone the koi spread out again instead of staying in one pile:
+    // count pairs whose bodies overlap, 3 to 8 seconds after the last pellet.
+    let piled = 0
+    let samples = 0
+    for (let trial = 0; trial < 3; trial++) {
+      const koi = new OceanEngine(cv, [0.9, 0.82, 0.76, 0.7, 0.62, 0.56].map((size) => ({ kind: 'koi', size })), { fish: 0, contain: true, pointer: false })
+      const w = koi.world
+      for (let i = 0; i < 600; i++) w.step(1 / 60)
+      w.splash(450, 300)
+      for (let i = 0; w.food.length && i < 60 * 40; i++) w.step(1 / 60)
+      for (let i = 0; i < 60 * 8; i++) {
+        w.step(1 / 60)
+        if (i < 60 * 3 || i % 15) continue
+        const S = w.sharks
+        for (let a = 0; a < S.length; a++)
+          for (let b = a + 1; b < S.length; b++) {
+            const lim = (S[a].length + S[b].length) * 0.09
+            let hit = false
+            for (let m = 0; m < 16 && !hit; m++)
+              for (let n = 0; n < 16 && !hit; n++)
+                hit = Math.hypot(S[a].nodes[m * 2] - S[b].nodes[n * 2], S[a].nodes[m * 2 + 1] - S[b].nodes[n * 2 + 1]) < lim
+            if (hit) piled++
+          }
+        samples++
+      }
+      koi.destroy()
+    }
+    const pile = +(piled / samples).toFixed(2)
     const pod = new OceanEngine(cv, [{ kind: 'orca', size: 1 }, { kind: 'orca', size: 0.6 }], { contain: true, pointer: false })
     let breaths = 0
     for (let i = 0; i < 60 * 30; i++) {
@@ -352,10 +380,11 @@ function buildRelease(dir) {
     }
     pod.destroy()
     cv.remove()
-    return { scattered, left, breaths }
+    return { scattered, left, breaths, pile }
   })
   ok('koi pond: a click scatters food and the koi eat it', life.scattered >= 6 && life.left < life.scattered, JSON.stringify(life))
   ok('orcas surface to breathe', life.breaths >= 2, JSON.stringify(life))
+  ok('koi pond: after eating, the koi spread out again (overlapping pairs of 15)', life.pile < 2.5, JSON.stringify(life))
   const nt = tabs[2].page
   const ntInfo = await nt.evaluate(() => {
     const c = document.querySelector('.creatures')

@@ -500,7 +500,7 @@ patch("world.ts", "  /** 0 far / dim → 1 near / bright. */\n  depth: number;\n
 patch("world.ts", "        depth: clamp(size, 0, 1),", "        depth: clamp(size, 0, 1),\n        breathAt: rand(2, 8) + i * 2.5,")
 patch("world.ts", "  pointer = { x: 0, y: 0, active: false };", """  pointer = { x: 0, y: 0, active: false };
   /** Koi food: pellets scattered by a click, drifting on the surface until eaten. */
-  food: { x: number; y: number; vx: number; vy: number; until: number }[] = [];
+  food: { x: number; y: number; vx: number; vy: number; until: number; ripe: number }[] = [];
   /** Where an orca pod starts on its circuit, and which way round it goes. */
   private podAngle = rand(0, TAU);
   private podDir: 1 | -1 = Math.random() < 0.5 ? 1 : -1;""")
@@ -516,8 +516,9 @@ patch("world.ts", '  splash(x: number, y: number) {\n    this.events.push({ kind
       const n = randInt(6, 10);
       for (let i = 0; i < n; i++) {
         const a = rand(0, TAU);
-        const sp = rand(10, 46);
-        this.food.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, until: this.time + 45 });
+        const sp = rand(24, 80);
+        // Pellets land and spread for a moment before a koi can take one.
+        this.food.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, until: this.time + 45, ripe: this.time + 0.5 });
       }
       if (this.food.length > 60) this.food.splice(0, this.food.length - 60);
     }""")
@@ -553,21 +554,54 @@ patch("world.ts", "      // Hunt.", """      const koi = sh.kind === "koi";
 patch("world.ts", "      // Give other sharks room.", """      // Koi: feeding time. Head for the nearest pellet, keener the closer it is.
       let feeding = false;
       if (koi && this.food.length) {
-        let best = this.food[0];
-        let bd = Infinity;
+        // Each pellet draws only the two koi nearest it; the rest go for another one or
+        // hang back. So they spread over the food, come at it from around, and the last
+        // pellet doesn't pull the whole pond into one spot.
+        let best: (typeof this.food)[number] | null = null;
+        let score = Infinity;
         for (const p of this.food) {
-          const d2 = (p.x - hx) ** 2 + (p.y - hy) ** 2;
-          if (d2 < bd) {
-            bd = d2;
+          const mine = (p.x - hx) ** 2 + (p.y - hy) ** 2;
+          let ahead = 0;
+          for (const o of sharks) {
+            if (o !== sh && o.kind === "koi" && (o.nodes[0] - p.x) ** 2 + (o.nodes[1] - p.y) ** 2 < mine) ahead++;
+          }
+          if (ahead >= 2) continue;
+          const sc = mine * (1 + ahead);
+          if (sc < score) {
+            score = sc;
             best = p;
           }
         }
-        const d = Math.sqrt(bd) || 1;
-        const w = 2.6 + 2 * clamp(1 - d / (L * 2), 0, 1);
-        dx += ((best.x - hx) / d) * w;
-        dy += ((best.y - hy) / d) * w;
-        feeding = true;
-        closing = clamp(1 - d / (L * 0.8), 0, 1);
+        if (best) {
+          const d = Math.hypot(best.x - hx, best.y - hy) || 1;
+          const w = 2.6 + 2 * clamp(1 - d / (L * 2), 0, 1);
+          dx += ((best.x - hx) / d) * w;
+          dy += ((best.y - hy) / d) * w;
+          feeding = true;
+          closing = clamp(1 - d / (L * 0.8), 0, 1);
+        }
+      }
+      if (koi) {
+        // Fed: for a few seconds after the food runs out, dart out of the crowd.
+        // (Koi don't hunt, so hunger is free to mean this; the build-up above is cancelled.)
+        sh.hunger = feeding ? 1 : Math.max(0, sh.hunger - dt * 0.16);
+        if (!feeding && sh.hunger > 0.05) {
+          let cx = 0, cy = 0, count = 0;
+          for (const o of sharks) {
+            if (o === sh || o.kind !== "koi") continue;
+            const ox = o.nodes[8] - hx;
+            const oy = o.nodes[9] - hy;
+            if (ox * ox + oy * oy > (L * 1.6) ** 2) continue;
+            cx += ox;
+            cy += oy;
+            count++;
+          }
+          if (count) {
+            const d = Math.hypot(cx, cy) || 1;
+            dx -= (cx / d) * 3 * sh.hunger;
+            dy -= (cy / d) * 3 * sh.hunger;
+          }
+        }
       }
 
       // An orca pod: match the others' heading, close up when strung out.
@@ -599,19 +633,22 @@ patch("world.ts", "      // Give other sharks room.", """      // Koi: feeding t
       }
 
       // Give other sharks room.""")
-patch("world.ts", "const range = (L + other.length) * 0.45;", "const range = (L + other.length) * (orca ? 0.34 : koi ? 0.26 : 0.45);")
+patch("world.ts", "const range = (L + other.length) * 0.45;", "const range = (L + other.length) * (orca ? 0.34 : koi ? (feeding ? 0.22 : 0.5) : 0.45);")
+# Koi keep their distance along the whole body, and more firmly when they aren't feeding.
+patch("world.ts", "for (let k = 0; k < SHARK_NODES; k += 4) {", "for (let k = 0; k < SHARK_NODES; k += koi && !feeding ? 2 : 4) {")
+patch("world.ts", "const w = (1 - d / range) * 3;", "const w = (1 - d / range) * (koi && !feeding ? 4.5 : 3);")
 patch("world.ts", "const w = Math.sqrt(Math.min(1, m)) * 8;", "const w = Math.sqrt(Math.min(1, m)) * (feeding ? 3 : 8);")
 patch("world.ts", "const agility = Math.min(hunting", "const agility = koi\n        ? Math.min(feeding ? 2.4 : 1.1, sh.speed / (L * 0.08))\n        : orca\n        ? Math.min(hunting ? 0.9 + closing * 0.5 : 0.45, sh.speed / (L * 0.3))\n        : Math.min(hunting")
 # An orca's body barely bends; a shark's can curl into a C.
 patch("world.ts", "const maxBend = 0.16;", "const maxBend = orca ? 0.075 : 0.16;")
 patch("world.ts", "const cruise = 30 + L * 0.04;", "const cruise = koi ? 10 + L * 0.025 : 30 + L * 0.04;")
-patch("world.ts", "const targetSpeed = hunting", "const targetSpeed = feeding ? cruise * (2.3 - closing * 1.1) : hunting")
+patch("world.ts", "const targetSpeed = hunting", "const targetSpeed = feeding ? cruise * (2.3 - closing * 1.1) : koi ? cruise * (1 + 1.4 * sh.hunger) : hunting")
 patch("world.ts", "      // Feed.", """      // Koi gulp pellets at the snout.
       if (koi && this.food.length) {
         const mr = L * 0.05 + 6;
         for (let j = this.food.length - 1; j >= 0; j--) {
           const p = this.food[j];
-          if ((p.x - nodes[0]) ** 2 + (p.y - nodes[1]) ** 2 < mr * mr) {
+          if (time >= p.ripe && (p.x - nodes[0]) ** 2 + (p.y - nodes[1]) ** 2 < mr * mr) {
             this.food.splice(j, 1);
             this.events.push({ kind: "gulp", x: p.x, y: p.y });
           }
@@ -619,5 +656,39 @@ patch("world.ts", "      // Feed.", """      // Koi gulp pellets at the snout.
       }
 
       // Feed.""")
+
+# 7. Where one animal swims over another, the lower one is cut back by a cell around the
+#    upper one's outline, so two koi crossing read as two koi instead of one blob.
+patch("renderer.ts", "  private sharkShadow = new Uint8Array(0);", "  private sharkShadow = new Uint8Array(0);\n  /** Which animal (1-based draw order) holds each cell this frame. */\n  private sharkOwner = new Uint8Array(0);")
+patch("renderer.ts", "      this.sharkShadow = new Uint8Array(n);", "      this.sharkShadow = new Uint8Array(n);\n      this.sharkOwner = new Uint8Array(n);")
+patch("renderer.ts", "    sharkFlag.fill(0);\n    sharkShadow.fill(0);\n", "    sharkFlag.fill(0);\n    sharkShadow.fill(0);\n    const owner = this.sharkOwner;\n    owner.fill(0);\n    let ownerId = 0;\n")
+patch("renderer.ts", "    for (const sh of sharks) {\n      const L = sh.length;\n      const N = SHARK_NODES;", "    for (const sh of sharks) {\n      ownerId++;\n      const L = sh.length;\n      const N = SHARK_NODES;")
+patch("renderer.ts", "          sharkKind[i] = kindIndex;", "          sharkKind[i] = kindIndex;\n          owner[i] = ownerId;")
+patch("renderer.ts", """            sharkFlag[i] = FLAG_EDGE;
+            sharkShade[i] = coverage;
+          }
+        }
+      }
+""", """            sharkFlag[i] = FLAG_EDGE;
+            sharkShade[i] = coverage;
+          }
+        }
+      }
+      if (ownerId > 1) {
+        for (let r = Math.max(0, r0 - 1); r <= Math.min(rows - 1, r1 + 1); r++) {
+          for (let c = Math.max(0, c0 - 1); c <= Math.min(cols - 1, c1 + 1); c++) {
+            const i = r * cols + c;
+            if (!owner[i] || owner[i] === ownerId) continue;
+            if (
+              (c > 0 && owner[i - 1] === ownerId) || (c < cols - 1 && owner[i + 1] === ownerId) ||
+              (r > 0 && owner[i - cols] === ownerId) || (r < rows - 1 && owner[i + cols] === ownerId)
+            ) {
+              sharkFlag[i] = 0;
+              owner[i] = 0;
+            }
+          }
+        }
+      }
+""")
 
 print("patched", out)

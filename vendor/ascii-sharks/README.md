@@ -22,4 +22,7 @@ replacements) and then esbuild (ESM, minified); the commands are at the top of
    same cell grid (the koi pond's lily pads, in `features/new-tab/lily-pads.js`).
 6. Orca and koi behaviour: orcas travel as a pod on a stiff body and surface to
    breathe; koi cruise slowly, and a click (`splash`) scatters food they come to eat.
-   A pond with no fish doesn't reseed on resize.
+   Each pellet draws only the two koi nearest it, and once the food is gone they dart
+   apart, so they don't end up in one pile. A pond with no fish doesn't reseed on resize.
+7. Where one animal swims over another, the lower one is cut back by a cell around the
+   upper one's outline, so two crossing koi read as two koi rather than one blob.
