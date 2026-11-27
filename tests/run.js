@@ -114,6 +114,15 @@ function buildRelease(dir) {
     return { clip: c.style.clipPath.startsWith('path(evenodd'), clicks: getComputedStyle(c).pointerEvents, corner: px[3] }
   })
   ok('hub fish: clipped to the empty space, never block clicks, no backdrop', fish.clip && fish.clicks === 'none' && fish.corner === 0, JSON.stringify(fish))
+  const overlap = await settings.evaluate(() =>
+    import('../core/negative-space.js').then(({ cells }) => {
+      // Two padded boxes that overlap, like the sidebar's and the content's.
+      const parts = cells([{ left: 0, right: 100, top: 0, bottom: 100 }, { left: 80, right: 300, top: 0, bottom: 200 }])
+      const covering = (x, y) => parts.filter((c) => x > c.left && x < c.right && y > c.top && y < c.bottom).length
+      return [covering(90, 50), covering(50, 50), covering(200, 150), covering(50, 150)]
+    }),
+  )
+  ok('cut-outs that overlap still hide the fish (each spot covered once)', overlap.join() === '1,1,1,0', overlap.join())
   ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 1 && !(await settings.isVisible('#youtube .group')))
   ok('folded groups show how many features are on', (await settings.textContent('#youtube .count')) === '3 of 3 on')
   await settings.click('#youtube .sec-toggle')
@@ -136,6 +145,12 @@ function buildRelease(dir) {
   await yt.goto('https://www.youtube.com/').catch(() => {})
   await wait(600)
   ok('youtube.com lands on the gate', yt.url().includes('/features/youtube-gate/gate.html'))
+  await wait(1500)
+  const spiders = await yt.evaluate(() => {
+    const c = document.querySelector('.spiders')
+    return c && { clip: c.style.clipPath.startsWith('path(evenodd'), clicks: getComputedStyle(c).pointerEvents, corner: c.getContext('2d').getImageData(1, 1, 1, 1).data[3] }
+  })
+  ok('gate spiders: clipped to the empty space, never block clicks, no backdrop', spiders && spiders.clip && spiders.clicks === 'none' && spiders.corner === 0, JSON.stringify(spiders))
   await shot(yt, 'gate')
 
   /* switching the gate off */

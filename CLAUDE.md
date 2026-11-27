@@ -28,6 +28,12 @@ they dislike about Chrome or websites; each fix becomes a feature here.
 - Ask Yash before any matter of taste (look, copy, behaviour) that isn't settled by the
   rules above; otherwise follow the existing patterns.
 
+## Look of Chrome itself
+
+`theme/` is a separate theme extension (Chrome won't mix a theme with other features).
+Its colours come from `core/tokens.css`: `#0f0f0f` frame, `#1a1a1a` toolbar and active
+tab, greys for text and icons. Keep the two in step if the palette changes.
+
 ## Paused work
 
 The Address bar group (`forget-searches`, `site-pages`, `forget-pages`,

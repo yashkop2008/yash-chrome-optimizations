@@ -9,6 +9,23 @@ body {
   display: flex;
   flex-direction: column;
 }
+/* Spiders: under everything, never in the way of a click, greyscale. */
+.spiders {
+  position: fixed;
+  top: 44px;
+  left: 0;
+  z-index: 0;
+  width: 100vw;
+  height: calc(100vh - 44px);
+  pointer-events: none;
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+.bar,
+main {
+  position: relative;
+  z-index: 1;
+}
 
 .bar {
   display: flex;

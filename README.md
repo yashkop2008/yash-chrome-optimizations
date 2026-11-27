@@ -12,8 +12,14 @@ swim in the empty space around it.
 
 | Group | What it does |
 | --- | --- |
-| YouTube | A gate instead of the home page (back to work, park the urge, search one thing, or hold to fall in for a timed pass), a home feed that hides what you skipped, and a cats-only or Fern-only feed. |
+| YouTube | A gate instead of the home page (back to work, park the urge, search one thing, or hold to fall in for a timed pass) with ASCII spiders spinning webs around it ([ascii-spiders](https://github.com/stackedlol/ascii-spiders), MIT), a home feed that hides what you skipped, and a cats-only or Fern-only feed. |
 | Address bar | *Paused, hidden from the hub.* Keeps the dropdown to what you actually revisit by curating history. The code is in `features/` for when it's fixed. |
+
+## Chrome theme
+
+`theme/` is a separate theme extension that gives Chrome itself (tab strip, toolbar,
+address bar, new tab page) the same neutral graphite as the hub. Load it once with
+**Load unpacked** on the `theme` folder; see `theme/README.md`.
 
 ## Install (once)
 

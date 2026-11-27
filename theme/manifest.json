@@ -1,0 +1,140 @@
+{
+  "manifest_version": 3,
+  "name": "Yash's Chrome Theme",
+  "version": "1.0.0",
+  "description": "Neutral graphite for Chrome itself, matching Yash's Chrome Optimizations: no tint, colour only where it means something.",
+  "theme": {
+    "colors": {
+      "frame": [
+        15,
+        15,
+        15
+      ],
+      "frame_inactive": [
+        15,
+        15,
+        15
+      ],
+      "frame_incognito": [
+        10,
+        10,
+        10
+      ],
+      "frame_incognito_inactive": [
+        10,
+        10,
+        10
+      ],
+      "background_tab": [
+        15,
+        15,
+        15
+      ],
+      "background_tab_inactive": [
+        15,
+        15,
+        15
+      ],
+      "background_tab_incognito": [
+        10,
+        10,
+        10
+      ],
+      "background_tab_incognito_inactive": [
+        10,
+        10,
+        10
+      ],
+      "toolbar": [
+        26,
+        26,
+        26
+      ],
+      "toolbar_text": [
+        237,
+        237,
+        237
+      ],
+      "toolbar_button_icon": [
+        163,
+        163,
+        163
+      ],
+      "tab_text": [
+        237,
+        237,
+        237
+      ],
+      "tab_background_text": [
+        138,
+        138,
+        138
+      ],
+      "tab_background_text_inactive": [
+        107,
+        107,
+        107
+      ],
+      "tab_background_text_incognito": [
+        138,
+        138,
+        138
+      ],
+      "tab_background_text_incognito_inactive": [
+        107,
+        107,
+        107
+      ],
+      "bookmark_text": [
+        163,
+        163,
+        163
+      ],
+      "omnibox_background": [
+        15,
+        15,
+        15
+      ],
+      "omnibox_text": [
+        237,
+        237,
+        237
+      ],
+      "ntp_background": [
+        15,
+        15,
+        15
+      ],
+      "ntp_text": [
+        237,
+        237,
+        237
+      ],
+      "ntp_link": [
+        163,
+        163,
+        163
+      ],
+      "ntp_header": [
+        26,
+        26,
+        26
+      ],
+      "button_background": [
+        34,
+        34,
+        34
+      ]
+    },
+    "tints": {
+      "buttons": [
+        -1,
+        0,
+        0.64
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "bottom"
+    }
+  }
+}
