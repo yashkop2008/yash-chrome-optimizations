@@ -1,0 +1,7 @@
+{
+  "id": "yash-chrome-optimizations",
+  "repo": "yashkop2008/yash-chrome-optimizations",
+  "branch": "main",
+  "path": "",
+  "ignore": ["tests/", ".github/", ".gitignore", "CLAUDE.md"]
+}

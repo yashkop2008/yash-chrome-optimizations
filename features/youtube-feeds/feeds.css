@@ -1,0 +1,7 @@
+/* Themed feed (cats / Fern) replaces the home grid and its topic chips. */
+html.rh-themed ytd-browse[page-subtype='home'] #primary,
+html.rh-themed ytd-browse[page-subtype='home'] #header,
+html.rh-themed ytd-browse[page-subtype='home'] ytd-feed-filter-chip-bar-renderer,
+html.rh-themed ytm-browse ytm-rich-grid-renderer {
+  display: none !important;
+}

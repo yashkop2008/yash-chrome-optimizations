@@ -1,0 +1,41 @@
+/* Blinders: only active during a "search one thing" pass. */
+
+/* Home feed */
+html.rh-blinders ytd-browse[page-subtype='home'] #primary,
+html.rh-blinders ytm-browse ytm-rich-grid-renderer {
+  display: none !important;
+}
+html.rh-blinders ytd-browse[page-subtype='home']::before {
+  content: 'Home feed hidden. Use the search bar for the one thing you came for.';
+  display: block;
+  margin: 18vh auto 0;
+  max-width: 420px;
+  color: #8a8a8a;
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+}
+
+/* Recommendations next to and after a video */
+html.rh-blinders #secondary #related,
+html.rh-blinders ytd-watch-next-secondary-results-renderer,
+html.rh-blinders ytm-item-section-renderer[section-identifier='related-items'],
+html.rh-blinders .ytp-endscreen-content,
+html.rh-blinders .ytp-ce-element,
+html.rh-blinders .videowall-endscreen,
+html.rh-blinders .ytp-autonav-endscreen-countdown-overlay,
+html.rh-blinders .ytp-fullscreen-grid,
+html.rh-blinders .ytp-pause-overlay {
+  display: none !important;
+}
+
+/* Shorts everywhere, and the "people also watched" shelves inside search results */
+html.rh-blinders ytd-reel-shelf-renderer,
+html.rh-blinders ytd-rich-shelf-renderer[is-shorts],
+html.rh-blinders ytd-guide-entry-renderer:has(a[href^='/shorts']),
+html.rh-blinders ytd-mini-guide-entry-renderer:has(a[href^='/shorts']),
+html.rh-blinders ytd-search ytd-shelf-renderer,
+html.rh-blinders ytd-search ytd-horizontal-card-list-renderer,
+html.rh-blinders ytm-reel-shelf-renderer,
+html.rh-blinders ytm-shorts-lockup-view-model {
+  display: none !important;
+}

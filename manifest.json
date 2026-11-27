@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Yash's Chrome Optimizations",
+  "short_name": "Yash's Chrome",
+  "version": "2.0.0",
+  "description": "One personal extension for everything from redesigns to small quality-of-life fixes. Every change is a feature you can switch off.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn27fJXgPflNOYxJtF9CrZjkcHVyywcAS9svJdDg3jC/8XUpgrmdiQUi3Mgqu5d2BOhpbDEVy5HQYxJ4gmdS7cFzjmQCb57df0LVgKEzHnfci1DjBA+JXyZivasLUssft8hMU6/USmfZleBi4f2OPQTmqU31IPCAyXHk6Ak/58O3ZdIGVRnO8Lh1CMFrn7EH07hWm4hgfKGIyy/Wqo1bqa+7cGxukFZ8EjyPUODl52QAqvlSfU8ZjSDuW1ffBjpKI0iysWDHDgkvWY7W4rBDqYaXW2eYZFNxxrlySfQcaVW0bCBjQLhED+4v+znz/QvDoo1D2uMauQ1hrc25RMgXghQIDAQAB",
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Yash's Chrome"
+  },
+  "options_page": "settings/settings.html",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://youtu.be/*",
+    "https://api.github.com/*",
+    "https://codeload.github.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "features/youtube-gate/*",
+        "core/tokens.css",
+        "icons/48.png"
+      ],
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://youtu.be/*"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+/* Fresh home feed: videos you already passed over on an earlier visit. */
+html:not(.rh-show-passed) [data-rh-passed] {
+  display: none !important;
+}
+html.rh-show-passed [data-rh-passed] {
+  opacity: 0.3;
+  filter: grayscale(1);
+  transition: opacity 180ms ease-out;
+}
+html.rh-show-passed [data-rh-passed]:hover {
+  opacity: 0.8;
+}

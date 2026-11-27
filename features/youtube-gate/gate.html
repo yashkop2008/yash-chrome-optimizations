@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouTube gate · Yash's Chrome</title>
+    <link rel="icon" href="../../icons/48.png" />
+    <link rel="stylesheet" href="../../core/tokens.css" />
+    <link rel="stylesheet" href="gate.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <img src="../../icons/48.png" alt="" width="18" height="18" />
+        <span>Yash's Chrome</span>
+        <span class="crumb">YouTube gate</span>
+      </div>
+      <div class="meta mono" id="meta"></div>
+    </header>
+
+    <main>
+      <div class="hole" aria-hidden="true">
+        <canvas id="hole"></canvas>
+      </div>
+
+      <div class="title">
+        <h1 id="headline">You were about to open YouTube.</h1>
+        <p class="sub" id="sub"></p>
+        <p class="whisper" id="whisper" aria-live="polite"></p>
+      </div>
+
+      <form class="composer" id="task-form" autocomplete="off">
+        <label for="task" class="composer-label">Right now I'm supposed to be</label>
+        <textarea id="task" rows="1" maxlength="140" placeholder="finishing the chem lab write-up"></textarea>
+        <div class="composer-row">
+          <span class="hint muted"><kbd>Enter</kbd> takes you back</span>
+          <button type="submit" class="btn-light" id="back">
+            Back to it
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </button>
+        </div>
+      </form>
+
+      <section class="group" aria-labelledby="group-title">
+        <div class="group-title" id="group-title">If the urge won't leave</div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Park it for later</div>
+            <div class="row-desc">Write down what you wanted to watch. It waits in the list until you're done.</div>
+          </div>
+          <form class="row-control" id="park-form" autocomplete="off">
+            <input class="field" id="park" maxlength="120" placeholder="that video about octopus brains" aria-label="What did you want to watch?" />
+            <button class="btn-outline" type="submit">Park</button>
+          </form>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Search one specific thing</div>
+            <div class="row-desc"><span class="mono" id="search-min">15</span> minutes with the home feed, Shorts and recommendations hidden. For the tutorial you actually need.</div>
+          </div>
+          <form class="row-control" id="search-form" autocomplete="off">
+            <input class="field" id="search" maxlength="120" placeholder="limits of rational functions" aria-label="What do you need to search for?" />
+            <button class="btn-outline" type="submit" id="search-btn" disabled>Search</button>
+          </form>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Fall in anyway</div>
+            <div class="row-desc">All of YouTube, timed. You have to hold for it, and the hold gets longer every time today.</div>
+          </div>
+          <div class="row-control">
+            <div class="seg" role="radiogroup" aria-label="How long">
+              <label><input type="radio" name="min" value="5" checked /><span>5m</span></label>
+              <label><input type="radio" name="min" value="10" /><span>10m</span></label>
+              <label><input type="radio" name="min" value="15" /><span>15m</span></label>
+            </div>
+            <button class="hold" id="fall" type="button"><span id="fall-label">Hold 8s</span></button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+
+    <script type="module" src="gate.js"></script>
+  </body>
+</html>

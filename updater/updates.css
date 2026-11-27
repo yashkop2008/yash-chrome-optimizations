@@ -1,0 +1,312 @@
+/* Self-contained so the updater works in any extension. Same tokens as TasteCode. */
+:root {
+  color-scheme: dark;
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --surface-3: #2b2b2b;
+  --line: #262626;
+  --line-strong: #333333;
+  --text: #ededed;
+  --text-2: #a3a3a3;
+  --text-3: #8a8a8a;
+  --light: #ededed;
+  --on-light: #101010;
+  --chip-hover: color-mix(in srgb, var(--text) 7%, transparent);
+  --track: color-mix(in srgb, black 34%, var(--surface));
+  --attention: #4c9dff;
+  --success: #6fbf8e;
+  --error: #e5687a;
+  --shadow: inset 0 1px 0 rgb(255 255 255 / 4%), 0 1px 2px rgb(0 0 0 / 28%), 0 18px 40px -24px rgb(0 0 0 / 72%);
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', 'Cascadia Code', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #fdfdfd;
+    --surface: #fafafa;
+    --surface-2: #f5f5f6;
+    --surface-3: #ececef;
+    --line: #ebebed;
+    --line-strong: #dedee2;
+    --text: #27272a;
+    --text-2: #52525b;
+    --text-3: #6b6b73;
+    --light: #27272a;
+    --on-light: #fdfdfd;
+    --track: color-mix(in srgb, var(--text) 6%, var(--surface-2));
+    --attention: #1f6fd6;
+    --success: #2f8a57;
+    --error: #c23a4e;
+    --shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 18px 40px -26px rgb(0 0 0 / 22%);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13.5px/1.45 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--text) 60%, transparent);
+  outline-offset: 2px;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: var(--text-3);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 44px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 550;
+}
+.crumb {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.crumb::before {
+  content: '/';
+  margin-right: 8px;
+  color: var(--line-strong);
+}
+
+main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+}
+
+.status {
+  padding: 18px 18px 16px;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.version-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.label {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+.version {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.message {
+  min-height: 1.45em;
+  margin: 8px 0 0;
+  color: var(--text-2);
+}
+.message[data-tone='good'] {
+  color: var(--success);
+}
+.message[data-tone='bad'] {
+  color: var(--error);
+}
+.message[data-tone='news'] {
+  color: var(--attention);
+}
+
+.progress {
+  margin-top: 12px;
+}
+.track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: var(--text);
+  transition: transform 220ms var(--ease-out);
+}
+.step {
+  margin-top: 6px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes {
+  margin: 14px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.notes li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+.notes li span:last-child {
+  color: var(--text-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.group {
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.group-title {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+}
+.row + .row,
+form + .row {
+  border-top: 1px solid var(--line);
+}
+.row-text {
+  display: grid;
+}
+.row-title {
+  font-weight: 550;
+}
+.row-desc {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+.row-desc[data-tone='good'] {
+  color: var(--success);
+}
+
+.field {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--bg);
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.field::placeholder {
+  color: var(--text-3);
+}
+.field:focus {
+  border-color: var(--text-3);
+}
+
+.btn-light,
+.btn-ghost,
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms, opacity 120ms, transform 140ms var(--ease-out);
+}
+.btn-light {
+  border: 0;
+  background: var(--light);
+  color: var(--on-light);
+  font-weight: 550;
+}
+.btn-ghost {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+}
+.btn-ghost:hover {
+  background: var(--chip-hover);
+  color: var(--text);
+}
+.btn-outline {
+  justify-self: end;
+  height: 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.btn-outline:hover {
+  background: var(--surface-3);
+}
+button:active {
+  transform: scale(0.97);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .btn-outline {
+    justify-self: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

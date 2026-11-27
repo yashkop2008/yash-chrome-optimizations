@@ -1,0 +1,335 @@
+/*
+ * The design system for every page in Yash's Chrome Optimizations, borrowed
+ * from TasteCode: neutral greyscale, colour reserved for meaning, a light
+ * surface as the only emphasis, hairline edges, sentence-case labels.
+ * Tokens first, then the shared components (.btn-*, .field, .hold, .switch,
+ * .pseg, .link). New features use these instead of inventing their own.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --surface-3: #2b2b2b;
+  --line: #262626;
+  --line-strong: #333333;
+  --hairline: color-mix(in srgb, var(--text) 10%, transparent);
+  --hairline-focus: color-mix(in srgb, var(--text) 18%, transparent);
+  --chip-hover: color-mix(in srgb, var(--text) 7%, transparent);
+
+  --text: #ededed;
+  --text-2: #a3a3a3;
+  --text-3: #8a8a8a;
+  --placeholder: #828282;
+
+  --light: #ededed;
+  --on-light: #101010;
+
+  --attention: #4c9dff;
+  --success: #6fbf8e;
+  --warning: #f2c94c;
+  --error: #e5687a;
+
+  --track: color-mix(in srgb, black 34%, var(--surface));
+  --fill: color-mix(in srgb, var(--text) 24%, var(--surface));
+
+  --shadow-composer:
+    inset 0 1px 0 rgb(255 255 255 / 4%), 0 1px 2px rgb(0 0 0 / 28%),
+    0 18px 40px -24px rgb(0 0 0 / 72%);
+  --shadow-flyout: 0 8px 24px -14px rgb(0 0 0 / 46%);
+
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', 'Cascadia Code', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --t-xs: 11.5px;
+  --t-sm: 12.5px;
+  --t-md: 13.5px;
+  --t-lg: 15px;
+  --t-xl: 20px;
+  --t-2xl: 26px;
+
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-xl: 10px;
+  --r-lg: 12px;
+  --r-card: 16px;
+  --r-composer: 20px;
+  --r-pill: 999px;
+
+  --focus-ring: 2px solid color-mix(in srgb, var(--text) 60%, transparent);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-popup: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --ease-dock: cubic-bezier(0.45, 0, 0.2, 1);
+  --dur-hover: 120ms;
+  --dur-press: 140ms;
+  --dur-fast: 180ms;
+  --dur-slow: 260ms;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #fdfdfd;
+    --surface: #fafafa;
+    --surface-2: #f5f5f6;
+    --surface-3: #ececef;
+    --line: #ebebed;
+    --line-strong: #dedee2;
+    --text: #27272a;
+    --text-2: #52525b;
+    --text-3: #6b6b73;
+    --placeholder: #8a8a92;
+    --light: #27272a;
+    --on-light: #fdfdfd;
+    --attention: #1f6fd6;
+    --success: #2f8a57;
+    --error: #c23a4e;
+    --track: color-mix(in srgb, var(--text) 6%, var(--surface-2));
+    --fill: color-mix(in srgb, var(--text) 16%, var(--surface-2));
+    --shadow-composer: 0 1px 2px rgb(0 0 0 / 6%), 0 18px 40px -26px rgb(0 0 0 / 22%);
+    --shadow-flyout: 0 8px 24px -14px rgb(0 0 0 / 18%);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--t-md);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--text-3);
+}
+
+/* The one emphasised control: a light surface, not a hue. */
+.btn-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--light);
+  color: var(--on-light);
+  font-weight: 550;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-hover);
+}
+.btn-light:hover {
+  opacity: 0.92;
+}
+.btn-light:active {
+  transform: scale(0.97);
+}
+
+/* Ghost chip: no fill until hover. */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-xl);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background var(--dur-hover), color var(--dur-hover);
+}
+.btn-ghost:hover {
+  background: var(--chip-hover);
+  color: var(--text);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-hover), border-color var(--dur-hover), transform var(--dur-press) var(--ease-out);
+}
+.btn-outline:hover {
+  background: var(--surface-3);
+}
+.btn-outline:active {
+  transform: scale(0.97);
+}
+.btn-outline:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.field {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--bg);
+  outline: none;
+  transition: border-color var(--dur-hover);
+}
+.field::placeholder {
+  color: var(--placeholder);
+}
+.field:focus {
+  border-color: var(--text-3);
+}
+
+/* Hold-to-confirm: a recessed track that fills while pressed. */
+.hold {
+  position: relative;
+  overflow: hidden;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--track);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  white-space: nowrap;
+}
+.hold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  background: var(--fill);
+}
+.hold > span {
+  position: relative;
+}
+
+/* Inline text button. */
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link:hover {
+  color: var(--text);
+}
+
+/* Toggle: TasteCode's light pill with a dark knob when on. */
+.switch {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--track);
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast);
+}
+.switch[aria-checked='true'] {
+  border-color: var(--light);
+  background: var(--light);
+}
+.switch[aria-checked='true']::after {
+  transform: translateX(14px);
+  background: var(--on-light);
+}
+
+/* Segmented control made of buttons with aria-pressed. */
+.pseg {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--track);
+}
+.pseg button {
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-3);
+  font-size: var(--t-xs);
+  cursor: pointer;
+  transition: background var(--dur-hover), color var(--dur-hover);
+}
+.pseg button:hover {
+  color: var(--text);
+}
+.pseg button[aria-pressed='true'] {
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 28%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}
