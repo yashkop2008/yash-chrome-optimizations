@@ -14,7 +14,7 @@ swim in the empty space around it.
 | --- | --- |
 | Focus | A gate in front of every distracting site you list (YouTube, X, Reddit, TikTok, Instagram to start): back to work, park the urge, or hold to fall in for a pass to that one site; optionally only during school hours. ASCII spiders spin webs around it ([ascii-spiders](https://github.com/stackedlol/ascii-spiders), MIT). Quiet tabs park tabs you haven't touched in a day, merge duplicates and clear extra empty new tabs. |
 | YouTube | Search one thing with blinders (from the gate), a home feed that hides what you skipped, and a cats-only or Fern-only feed. |
-| New tab | Every new tab is the next ASCII creature in line (sharks, spiders, more to come), and your most visited sites appear as plain names along the bottom only when your mouse goes there. |
+| New tab | Every new tab is the next ASCII creature in line (sharks, spiders, jellyfish, a bird murmuration, fireflies that slowly flash in sync), and your most visited sites appear as plain names along the bottom only when your mouse goes there. |
 | Address bar | *Paused, hidden from the hub.* Keeps the dropdown to what you actually revisit by curating history. The code is in `features/` for when it's fixed. |
 
 ## Chrome theme

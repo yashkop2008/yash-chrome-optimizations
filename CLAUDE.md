@@ -38,16 +38,22 @@ once and then removed with `history.replaceState`. Only `focus.html` is web-acce
 ## ASCII creatures
 
 New tabs rotate through `CREATURES` in `features/new-tab/creatures.js`. To add one,
-vendor its engine into `vendor/<name>/` (bundled to one ESM file, with the
-transparent-canvas patch described in the existing vendor READMEs and the upstream
-licence kept), then add an entry with `id`, `name` and `start(canvas, theme)`. The hub
+either write it on `AsciiField` (`features/new-tab/ascii/field.js`: implement
+`setup()`, `step(dt)`, `draw()` with `put(ch, x, y, alpha)`; see jellyfish,
+murmuration, fireflies), or vendor an existing engine into `vendor/<name>/` (bundled
+to one ESM file, with the transparent-canvas patch described in the existing vendor
+READMEs and the upstream licence kept). Then add an entry with `id`, `name` and
+`start(canvas, theme)`. The hub
 panel picks it up automatically. Creatures are drawn greyscale.
 
 ## Look of Chrome itself
 
 `theme/` is a separate theme extension (Chrome won't mix a theme with other features).
 Its colours come from `core/tokens.css`: `#0f0f0f` frame, `#1a1a1a` toolbar and active
-tab, greys for text and icons. Keep the two in step if the palette changes.
+tab, greys for text and icons. Keep the two in step if the palette changes. The tab-strip texture is drawn by
+`theme/make-texture.py`; Chrome takes one image per slot at normal resolution (the
+`100_percent`/`200_percent` form is ignored) and tiny glyphs lose brightness to
+anti-aliasing, so check it in a real Chrome window (Xvfb + `import`) after changes.
 
 ## Health
 

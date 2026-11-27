@@ -1,9 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Yash's Chrome Theme",
-  "version": "1.0.0",
-  "description": "Neutral graphite for Chrome itself, matching Yash's Chrome Optimizations: no tint, colour only where it means something.",
+  "version": "1.1.0",
+  "description": "Neutral graphite for Chrome itself, in the exact values of Yash's Chrome Optimizations, with a faint ASCII current behind the tabs.",
   "theme": {
+    "images": {
+      "theme_frame": "images/frame.png",
+      "theme_frame_inactive": "images/frame.png"
+    },
     "colors": {
       "frame": [
         15,
@@ -56,9 +60,9 @@
         237
       ],
       "toolbar_button_icon": [
-        163,
-        163,
-        163
+        138,
+        138,
+        138
       ],
       "tab_text": [
         237,
@@ -130,7 +134,7 @@
       "buttons": [
         -1,
         0,
-        0.64
+        0.54
       ]
     },
     "properties": {

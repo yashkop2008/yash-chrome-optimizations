@@ -1,6 +1,7 @@
 // The ASCII creatures new tabs take turns with. Adding one = one entry here:
 // an id, a name for the hub, and start(canvas, theme) returning its engine
-// (anything with destroy()). Engines live in vendor/, bundled to plain JS.
+// (anything with destroy()). Borrowed engines live in vendor/ (bundled to plain
+// JS); our own extend AsciiField in ./ascii/.
 
 export const CREATURES = [
   {
@@ -24,6 +25,30 @@ export const CREATURES = [
     async start(canvas, theme) {
       const { SpiderEngine } = await import('../../vendor/ascii-spiders/ascii-spiders.js')
       return new SpiderEngine(canvas, undefined, { theme, build: true, pointer: true })
+    },
+  },
+  {
+    id: 'jellyfish',
+    name: 'Jellyfish',
+    async start(canvas, theme) {
+      const { Jellyfish } = await import('./ascii/jellyfish.js')
+      return new Jellyfish(canvas, { theme })
+    },
+  },
+  {
+    id: 'murmuration',
+    name: 'Birds',
+    async start(canvas, theme) {
+      const { Murmuration } = await import('./ascii/murmuration.js')
+      return new Murmuration(canvas, { theme, cell: 13 })
+    },
+  },
+  {
+    id: 'fireflies',
+    name: 'Fireflies',
+    async start(canvas, theme) {
+      const { Fireflies } = await import('./ascii/fireflies.js')
+      return new Fireflies(canvas, { theme })
     },
   },
 ]

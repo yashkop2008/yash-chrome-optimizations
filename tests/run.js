@@ -313,7 +313,24 @@ function buildRelease(dir) {
     tabs.push({ url: t.url(), creature: await t.evaluate(() => document.documentElement.dataset.creature).catch(() => null), page: t })
   }
   ok('new tab is replaced by ours', tabs[0].url.endsWith('/newtab.html'), tabs[0].url)
-  ok('consecutive new tabs take turns', tabs.map((t) => t.creature).join() === 'sharks,spiders,sharks', tabs.map((t) => t.creature).join())
+  ok('consecutive new tabs take turns', tabs.map((t) => t.creature).join() === 'sharks,spiders,jellyfish', tabs.map((t) => t.creature).join())
+  // Every creature draws something on its own, without errors.
+  const drawn = {}
+  for (let i = 0; i < 5; i++) {
+    await settings.evaluate((n) => chrome.storage.local.set({ ntNext: n }), i)
+    const c = await ctx.newPage()
+    await c.goto('chrome://newtab/').catch(() => {})
+    await wait(2500)
+    drawn[await c.evaluate(() => document.documentElement.dataset.creature)] = await c.evaluate(() => {
+      const cv = document.querySelector('.creatures')
+      const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data
+      let n = 0
+      for (let k = 3; k < d.length; k += 16) if (d[k] > 0) n++
+      return n
+    })
+    await c.close()
+  }
+  ok('all five creatures draw', ['sharks', 'spiders', 'jellyfish', 'murmuration', 'fireflies'].every((k) => drawn[k] > 20), JSON.stringify(drawn))
   const nt = tabs[2].page
   const ntInfo = await nt.evaluate(() => {
     const c = document.querySelector('.creatures')
