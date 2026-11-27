@@ -38,9 +38,10 @@ once and then removed with `history.replaceState`. Only `focus.html` is web-acce
 ## ASCII creatures
 
 New tabs rotate through `CREATURES` in `features/new-tab/creatures.js`. To add one,
-vendor its engine into `vendor/<name>/` (bundled to one ESM file, with the
-transparent-canvas patch described in the existing vendor READMEs and the upstream
-licence kept). The bar is the sharks and spiders: Yash removed home-made jellyfish,
+prefer a new scene from the existing engines (their species and options), or a new
+kind added through `vendor/ascii-sharks/patch.py` (the manta shows how; never edit the
+bundled file by hand), or vendor another engine into `vendor/<name>/` (bundled to one
+ESM file, with the transparent-canvas patch and the upstream licence kept). The bar is the sharks and spiders: Yash removed home-made jellyfish,
 birds and fireflies as not up to that quality, so only add creatures that match it. Then add an entry with `id`, `name` and
 `start(canvas, theme)`. The hub
 panel picks it up automatically. Creatures are drawn greyscale.

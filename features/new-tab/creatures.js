@@ -2,29 +2,61 @@
 // an id, a name for the hub, and start(canvas, theme) returning its engine
 // (anything with destroy()). Engines live in vendor/, bundled to plain JS.
 
+const ocean = async (canvas, theme, sharks, options = {}) => {
+  const { OceanEngine } = await import('../../vendor/ascii-sharks/ascii-sharks.js')
+  return new OceanEngine(canvas, sharks, { theme, clearCentre: false, contain: false, pointer: true, ...options })
+}
+const webs = async (canvas, theme, spiders, options = {}) => {
+  const { SpiderEngine } = await import('../../vendor/ascii-spiders/ascii-spiders.js')
+  return new SpiderEngine(canvas, spiders, { theme, build: true, pointer: true, ...options })
+}
+
 export const CREATURES = [
   {
     id: 'sharks',
     name: 'Sharks',
-    async start(canvas, theme) {
-      const { OceanEngine } = await import('../../vendor/ascii-sharks/ascii-sharks.js')
-      return new OceanEngine(
-        canvas,
-        [
-          { kind: 'classic', size: 1 },
-          { kind: 'hammerhead', size: 0.85 },
-        ],
-        { theme, clearCentre: false, contain: false, pointer: true },
-      )
-    },
+    start: (canvas, theme) =>
+      ocean(canvas, theme, [
+        { kind: 'classic', size: 1 },
+        { kind: 'hammerhead', size: 0.85 },
+      ]),
   },
   {
     id: 'spiders',
     name: 'Spiders',
-    async start(canvas, theme) {
-      const { SpiderEngine } = await import('../../vendor/ascii-spiders/ascii-spiders.js')
-      return new SpiderEngine(canvas, undefined, { theme, build: true, pointer: true })
-    },
+    start: (canvas, theme) => webs(canvas, theme, undefined),
+  },
+  {
+    // Two whale sharks, huge and slow, spotted, through the schools.
+    id: 'whale-sharks',
+    name: 'Whale sharks',
+    start: (canvas, theme) =>
+      ocean(canvas, theme, [
+        { kind: 'whale', size: 1.25 },
+        { kind: 'whale', size: 0.95 },
+      ]),
+  },
+  {
+    // Golden orb weavers: very long legs, few and large webs.
+    id: 'golden-orbs',
+    name: 'Golden orbs',
+    start: (canvas, theme) => webs(canvas, theme, [{ kind: 'nephila' }, { kind: 'nephila' }, { kind: 'nephila' }], { webs: 3 }),
+  },
+  {
+    // Only sardines, which mill into rotating bait balls, and one mako cutting through.
+    id: 'bait-ball',
+    name: 'Bait ball',
+    start: (canvas, theme) => ocean(canvas, theme, [{ kind: 'mako', size: 0.75 }], { fishSpecies: ['sardine'], schoolSize: [70, 110], fish: 240 }),
+  },
+  {
+    // Manta rays (added to the vendored engine): wide flapping wings, whip tails.
+    id: 'manta-rays',
+    name: 'Manta rays',
+    start: (canvas, theme) =>
+      ocean(canvas, theme, [
+        { kind: 'manta', size: 0.62 },
+        { kind: 'manta', size: 0.48 },
+      ]),
   },
 ]
 

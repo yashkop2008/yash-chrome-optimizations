@@ -313,10 +313,10 @@ function buildRelease(dir) {
     tabs.push({ url: t.url(), creature: await t.evaluate(() => document.documentElement.dataset.creature).catch(() => null), page: t })
   }
   ok('new tab is replaced by ours', tabs[0].url.endsWith('/newtab.html'), tabs[0].url)
-  ok('consecutive new tabs take turns', tabs.map((t) => t.creature).join() === 'sharks,spiders,sharks', tabs.map((t) => t.creature).join())
+  ok('consecutive new tabs take turns', tabs.map((t) => t.creature).join() === 'sharks,spiders,whale-sharks', tabs.map((t) => t.creature).join())
   // Every creature draws something on its own, without errors.
   const drawn = {}
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 6; i++) {
     await settings.evaluate((n) => chrome.storage.local.set({ ntNext: n }), i)
     const c = await ctx.newPage()
     await c.goto('chrome://newtab/').catch(() => {})
@@ -330,7 +330,7 @@ function buildRelease(dir) {
     })
     await c.close()
   }
-  ok('both creatures draw', ['sharks', 'spiders'].every((k) => drawn[k] > 20), JSON.stringify(drawn))
+  ok('every creature draws', ['sharks', 'spiders', 'whale-sharks', 'golden-orbs', 'bait-ball', 'manta-rays'].every((k) => drawn[k] > 20), JSON.stringify(drawn))
   const nt = tabs[2].page
   const ntInfo = await nt.evaluate(() => {
     const c = document.querySelector('.creatures')
