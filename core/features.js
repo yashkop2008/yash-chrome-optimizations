@@ -26,6 +26,11 @@ export const GROUPS = [
     summary: 'Keeps YouTube from eating schoolwork, and makes the home page worth opening.',
   },
   {
+    id: 'new-tab',
+    name: 'New tab',
+    summary: 'Chrome’s new tab, replaced by ASCII creatures that take turns. Nothing else unless you go looking.',
+  },
+  {
     id: 'address-bar',
     // Paused: Yash isn't convinced it works yet. Fix, test with tests/omnibox.js, unpause.
     paused: true,
@@ -83,6 +88,21 @@ export const FEATURES = [
       },
     ],
     panel: 'features/youtube-fresh-feed/panel.js',
+  },
+  {
+    id: 'newtab-creatures',
+    group: 'new-tab',
+    name: 'Rotating creatures',
+    summary: 'Every new tab is the next creature in line: sharks, then spiders, and whatever gets added. They scatter from your cursor.',
+    enabled: true,
+    panel: 'features/new-tab/panel.js',
+  },
+  {
+    id: 'newtab-shortcuts',
+    group: 'new-tab',
+    name: 'Quiet shortcuts',
+    summary: 'Your most visited sites as plain names along the bottom, only when your mouse goes there.',
+    enabled: true,
   },
   {
     id: 'forget-searches',

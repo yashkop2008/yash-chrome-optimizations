@@ -105,9 +105,9 @@ function buildRelease(dir) {
   ok('toolbar icon opens the hub, not a popup', !manifest.action.default_popup)
   const settings = await page('yash.html')
   await wait(800)
-  ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'YouTube' && !(await settings.locator('#address-bar').count()))
+  ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'YouTube|New tab' && !(await settings.locator('#address-bar').count()))
   ok('header is just the name, no logo', !(await settings.locator('.bar img').count()))
-  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 3 + 1)
+  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 5 + 2)
   const fish = await settings.evaluate(() => {
     const c = document.querySelector('.ocean')
     const px = c.getContext('2d').getImageData(1, c.height - 2, 1, 1).data
@@ -123,7 +123,7 @@ function buildRelease(dir) {
     }),
   )
   ok('cut-outs that overlap still hide the fish (each spot covered once)', overlap.join() === '1,1,1,0', overlap.join())
-  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 1 && !(await settings.isVisible('#youtube .group')))
+  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 2 && !(await settings.isVisible('#youtube .group')))
   ok('folded groups show how many features are on', (await settings.textContent('#youtube .count')) === '3 of 3 on')
   await settings.click('#youtube .sec-toggle')
   await wait(300)
@@ -220,7 +220,7 @@ function buildRelease(dir) {
   /* gate back on, hub panels */
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
   await wait(900)
-  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 3)
+  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 4)
   ok('gate status shows in the YouTube header', (await settings.textContent('#youtube .status-text')) === 'Guarding')
   await settings.setViewportSize({ width: 1366, height: 2200 })
   await wait(300)
@@ -231,6 +231,43 @@ function buildRelease(dir) {
   ok('the group switch turns all of YouTube off', !ytOff['youtube-gate'] && !ytOff['youtube-feeds'] && !ytOff['youtube-fresh-feed'])
   await settings.click('#youtube .all .switch')
   await wait(400)
+
+  /* new tab: rotating creatures and quiet shortcuts */
+  const tabs = []
+  for (let i = 0; i < 3; i++) {
+    const t = await ctx.newPage()
+    await t.goto('chrome://newtab/').catch(() => {})
+    await wait(1200)
+    tabs.push({ url: t.url(), creature: await t.evaluate(() => document.documentElement.dataset.creature).catch(() => null), page: t })
+  }
+  ok('new tab is replaced by ours', tabs[0].url.endsWith('/newtab.html'), tabs[0].url)
+  ok('consecutive new tabs take turns', tabs.map((t) => t.creature).join() === 'sharks,spiders,sharks', tabs.map((t) => t.creature).join())
+  const nt = tabs[2].page
+  const ntInfo = await nt.evaluate(() => {
+    const c = document.querySelector('.creatures')
+    return { transparent: c.getContext('2d').getImageData(1, 1, 1, 1).data[3] === 0, clicks: getComputedStyle(c).pointerEvents, links: document.querySelectorAll('.shortcuts a').length }
+  })
+  ok('creatures never block clicks and paint no backdrop', ntInfo.transparent && ntInfo.clicks === 'none', JSON.stringify(ntInfo))
+  if (ntInfo.links) {
+    const shown = () => nt.evaluate(() => getComputedStyle(document.querySelector('.shortcuts')).opacity)
+    await nt.mouse.move(400, 100)
+    await wait(400)
+    const before = await shown()
+    await nt.mouse.move(400, 740)
+    await wait(400)
+    const after = await shown()
+    const clipped = await nt.evaluate(() => document.querySelector('.creatures').style.clipPath.split('M').length > 2)
+    ok('shortcuts stay hidden until the mouse nears the bottom', before === '0' && after === '1', `${before} -> ${after}`)
+    ok('while shown, creatures swim behind them', clipped)
+  } else console.log('SKIP  no most-visited sites in this profile, shortcuts not shown')
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('newtab-creatures', false)))
+  await wait(400)
+  const blank = await ctx.newPage()
+  await blank.goto('chrome://newtab/').catch(() => {})
+  await wait(800)
+  ok('creatures switched off: a plain page', !(await blank.evaluate(() => !!document.querySelector('.creatures'))))
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('newtab-creatures', true)))
+  for (const t of [...tabs.map((t) => t.page), blank]) await t.close()
 
   /* updater */
   const upd = await page('updates.html')

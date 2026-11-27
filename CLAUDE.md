@@ -35,6 +35,14 @@ Pages live at the top level so the address bar stays short: `yash.html` (hub),
 Anything passed in the address (the gate's destination, `#welcome`, `#updated`) is read
 once and then removed with `history.replaceState`. Only `youtube.html` is web-accessible.
 
+## ASCII creatures
+
+New tabs rotate through `CREATURES` in `features/new-tab/creatures.js`. To add one,
+vendor its engine into `vendor/<name>/` (bundled to one ESM file, with the
+transparent-canvas patch described in the existing vendor READMEs and the upstream
+licence kept), then add an entry with `id`, `name` and `start(canvas, theme)`. The hub
+panel picks it up automatically. Creatures are drawn greyscale.
+
 ## Look of Chrome itself
 
 `theme/` is a separate theme extension (Chrome won't mix a theme with other features).

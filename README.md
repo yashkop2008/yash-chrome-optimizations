@@ -13,6 +13,7 @@ swim in the empty space around it.
 | Group | What it does |
 | --- | --- |
 | YouTube | A gate instead of the home page (back to work, park the urge, search one thing, or hold to fall in for a timed pass) with ASCII spiders spinning webs around it ([ascii-spiders](https://github.com/stackedlol/ascii-spiders), MIT), a home feed that hides what you skipped, and a cats-only or Fern-only feed. |
+| New tab | Every new tab is the next ASCII creature in line (sharks, spiders, more to come), and your most visited sites appear as plain names along the bottom only when your mouse goes there. |
 | Address bar | *Paused, hidden from the hub.* Keeps the dropdown to what you actually revisit by curating history. The code is in `features/` for when it's fixed. |
 
 ## Chrome theme
@@ -48,6 +49,7 @@ manifest.json          one manifest for everything
 yash.html              the hub (toolbar icon, or type "yash" + Space in the address bar)
 youtube.html           the YouTube gate
 updates.html           the updates page
+newtab.html            the new tab page
 background.js          service worker: registers enabled features, runs the updater
 core/
   features.js          the registry: groups, features, their scripts and hub panels
