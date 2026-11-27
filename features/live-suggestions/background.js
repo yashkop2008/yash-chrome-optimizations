@@ -9,6 +9,9 @@ async function apply() {
   else await setting.clear({})
 }
 
+// Also whenever the background wakes: install/update events aren't always
+// delivered, and a paused or switched-off feature must hand the setting back.
+apply()
 chrome.runtime.onInstalled.addListener(apply)
 chrome.runtime.onStartup.addListener(apply)
 chrome.storage.onChanged.addListener((c) => 'features' in c && apply())

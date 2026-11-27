@@ -1,10 +1,11 @@
 // Which features are on. Stored as { features: { [id]: boolean } } in
 // chrome.storage.local; anything not stored falls back to the registry default.
-import { FEATURES } from './features.js'
+import { FEATURES, isPaused } from './features.js'
 
 export async function enabledMap() {
   const { features = {} } = await chrome.storage.local.get('features')
-  return Object.fromEntries(FEATURES.map((f) => [f.id, features[f.id] ?? f.enabled]))
+  // A paused group's features are off whatever their switch says.
+  return Object.fromEntries(FEATURES.map((f) => [f.id, !isPaused(f) && (features[f.id] ?? f.enabled)]))
 }
 
 export async function isEnabled(id) {

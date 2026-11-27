@@ -28,6 +28,13 @@ they dislike about Chrome or websites; each fix becomes a feature here.
 - Ask Yash before any matter of taste (look, copy, behaviour) that isn't settled by the
   rules above; otherwise follow the existing patterns.
 
+## Paused work
+
+The Address bar group (`forget-searches`, `site-pages`, `forget-pages`,
+`live-suggestions`) is paused in `core/features.js`: hidden from the hub and every
+feature in it counts as off. Yash wasn't satisfied it works. To bring it back, fix it,
+run `node tests/omnibox.js` (it skips while the group is paused), and remove `paused`.
+
 ## Checking work
 
 `node tests/run.js [screenshot-dir]` loads the extension in headless Chromium against

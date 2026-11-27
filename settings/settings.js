@@ -1,7 +1,7 @@
 // The hub: opened by the toolbar icon. One section per group, each with a
 // switch for the whole group, then every feature with its own switch and,
 // while it's on, its panel (stats, lists, quick controls).
-import { GROUPS, FEATURES, inGroup } from '../core/features.js'
+import { VISIBLE_GROUPS as GROUPS, inGroup } from '../core/features.js'
 import { enabledMap, setEnabled } from '../core/settings.js'
 import { getConfig, getState, newer, currentVersion } from '../updater/updater.js'
 

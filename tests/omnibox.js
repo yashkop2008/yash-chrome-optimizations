@@ -96,6 +96,13 @@ async function waitForSweep(ctx) {
 }
 
 ;(async () => {
+  // While the Address bar group is paused (core/features.js) its features are off,
+  // so there's nothing to check yet. Unpause it before running this.
+  if (/id: 'address-bar',[\s\S]{0,200}paused: true/.test(fs.readFileSync(path.join(EXT, 'core/features.js'), 'utf8'))) {
+    console.log('SKIP  the Address bar group is paused in core/features.js')
+    process.exit(0)
+  }
+
   /* 1. history from before the extension existed */
   {
     const dir = profile()

@@ -10,10 +10,6 @@ let busy = false
 
 $('ext-name').textContent = me.short_name || me.name
 document.title = `Updates · ${me.name}`
-const icons = me.icons || {}
-const iconPath = icons['48'] || icons['32'] || icons['16'] || Object.values(icons)[0]
-if (iconPath) $('icon').src = chrome.runtime.getURL(iconPath)
-else $('icon').remove()
 $('version').textContent = currentVersion()
 
 function ago(ts) {

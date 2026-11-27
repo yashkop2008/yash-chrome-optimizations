@@ -105,18 +105,18 @@ function buildRelease(dir) {
   ok('toolbar icon opens the hub, not a popup', !manifest.action.default_popup)
   const settings = await page('settings/settings.html')
   await wait(800)
-  ok('hub groups features: YouTube and Address bar', (await settings.locator('main .sec h2').allTextContents()).slice(0, 2).join('|') === 'YouTube|Address bar')
-  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 7 + 2)
+  ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'YouTube' && !(await settings.locator('#address-bar').count()))
+  ok('header is just the name, no logo', !(await settings.locator('.bar img').count()))
+  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 3 + 1)
   const fish = await settings.evaluate(() => {
     const c = document.querySelector('.ocean')
     const px = c.getContext('2d').getImageData(1, c.height - 2, 1, 1).data
     return { clip: c.style.clipPath.startsWith('path(evenodd'), clicks: getComputedStyle(c).pointerEvents, corner: px[3] }
   })
   ok('hub fish: clipped to the empty space, never block clicks, no backdrop', fish.clip && fish.clicks === 'none' && fish.corner === 0, JSON.stringify(fish))
-  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 2 && !(await settings.isVisible('#youtube .group')))
-  ok('folded groups show how many features are on', (await settings.textContent('#address-bar .count')) === '2 of 4 on')
+  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 1 && !(await settings.isVisible('#youtube .group')))
+  ok('folded groups show how many features are on', (await settings.textContent('#youtube .count')) === '3 of 3 on')
   await settings.click('#youtube .sec-toggle')
-  await settings.click('#address-bar .sec-toggle')
   await wait(300)
   ok('the arrow opens a group', await settings.isVisible('#youtube .group'))
   const regs = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id))
@@ -180,78 +180,32 @@ function buildRelease(dir) {
   const folded = await settings.evaluate(() => chrome.storage.local.get('hubCollapsed'))
   ok('open/folded state is remembered', folded.hubCollapsed?.youtube === false)
 
-  /* address bar: one-time searches */
+  /* address bar: paused, so it must leave history and Chrome's settings alone */
   const hist = (text) => settings.evaluate((t) => chrome.history.search({ text: t, startTime: 0, maxResults: 1000 }).then((r) => r.map((h) => h.url)), text)
   await yt.goto('https://www.google.com/search?q=male+turkey+name')
   await wait(800)
-  ok('a one-time search is dropped from history', !(await hist('turkey')).length)
-  await yt.goto('https://www.google.com/search?q=anthropic+prompt+course')
-  await wait(800)
-  await settings.evaluate(async () => {
-    const { searchCounts } = await chrome.storage.local.get('searchCounts')
-    searchCounts['anthropic prompt course'].t -= 11 * 60 * 1000 // pretend the first search was a while ago
-    await chrome.storage.local.set({ searchCounts })
-  })
-  await yt.goto('https://www.google.com/search?q=Anthropic+prompt+course&sca=2')
-  await wait(800)
-  ok('a repeated search is kept', (await hist('anthropic')).length === 1)
-
-  /* address bar: just the site */
   await yt.goto('https://www.youtube.com/watch?v=abcdefghijk')
-  await wait(800)
-  await yt.goto('https://www.youtube.com/')
-  await wait(800)
-  const ytHist = await hist('youtube.com')
-  ok('youtube video pages are dropped, the site stays', !ytHist.some((u) => u.includes('watch')) && ytHist.some((u) => u === 'https://www.youtube.com/'), ytHist.join(' '))
+  await wait(1500)
+  ok('paused: searches stay in history', (await hist('turkey')).length === 1)
+  ok('paused: youtube pages stay in history', (await hist('abcdefghijk')).length === 1)
+  const lv = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
+  ok("paused: Google's suggestions are left to Chrome", lv.levelOfControl !== 'controlled_by_this_extension', JSON.stringify(lv))
+  const paused = await settings.evaluate(() => import('../core/settings.js').then((m) => m.enabledMap()))
+  ok('paused: every address bar feature counts as off', !paused['forget-searches'] && !paused['site-pages'] && !paused['forget-pages'] && !paused['live-suggestions'])
 
-  /* what was already in history goes automatically when the features switch on */
-  await settings.evaluate(async () => {
-    const m = await import('../core/settings.js')
-    await m.setEnabled('forget-searches', false)
-    await m.setEnabled('site-pages', false)
-    for (const u of ['https://www.google.com/search?q=restaurants+open+today', 'https://www.google.com/search?q=chipotle+thanksgiving', 'https://www.youtube.com/@moodafps', 'https://www.youtube.com/watch?v=OgZfZB1n7tc', 'https://example.org/keep-me'])
-      await chrome.history.addUrl({ url: u })
-  })
-  await wait(800)
-  ok('seeded history is there first', (await hist('chipotle')).length === 1 && (await hist('moodafps')).length === 1)
-  await settings.evaluate(async () => {
-    const m = await import('../core/settings.js')
-    await m.setEnabled('forget-searches', true)
-    await m.setEnabled('site-pages', true)
-  })
-  await wait(2500)
-  const after = await hist('')
-  ok('old one-time searches go without pressing anything', !after.some((u) => /restaurants|chipotle/.test(u)))
-  ok('old youtube pages go without pressing anything, other sites stay', !after.some((u) => /moodafps|OgZfZB1n7tc/.test(u)) && after.includes('https://example.org/keep-me'))
-  ok('no clean-up buttons left in the address bar panels', (await settings.locator('#address-bar [data-el=clean]').count()) === 0)
-  ok("the extension's own pages stay out of history", !after.some((u) => u.startsWith('chrome-extension://')))
-
-  /* pages opened through the gate */
+  /* the gate shows up as YouTube itself */
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
   await wait(800)
   await yt.goto('https://www.youtube.com/feed/subscriptions').catch(() => {})
-  await wait(4500)
-  const gated = await hist('youtube.com')
-  ok('a page the gate opened in place of is swept too', !gated.some((u) => u.includes('/feed/')), gated.join(' '))
+  await wait(800)
   ok('the gate presents itself as YouTube', (await yt.title()) === 'YouTube')
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', false)))
   await wait(600)
 
-  /* live suggestions */
-  const before = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
-  await settings.click('#address-bar .feature:nth-child(4) .switch')
-  await wait(800)
-  const lv = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
-  ok('live suggestions switch turns Google suggestions off', lv.value === false && lv.levelOfControl === 'controlled_by_this_extension', JSON.stringify(lv))
-  await settings.click('#address-bar .feature:nth-child(4) .switch')
-  await wait(800)
-  const back = await settings.evaluate(() => chrome.privacy.services.searchSuggestEnabled.get({}))
-  ok('switching it off hands the setting back', back.value === before.value && back.levelOfControl !== 'controlled_by_this_extension')
-
   /* gate back on, hub panels */
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
   await wait(900)
-  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 5)
+  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 3)
   ok('gate status shows in the YouTube header', (await settings.textContent('#youtube .status-text')) === 'Guarding')
   await settings.setViewportSize({ width: 1366, height: 2200 })
   await wait(300)
@@ -259,7 +213,7 @@ function buildRelease(dir) {
   await settings.click('#youtube .all .switch')
   await wait(600)
   const ytOff = await settings.evaluate(() => import('../core/settings.js').then((m) => m.enabledMap()))
-  ok('the group switch turns all of YouTube off', !ytOff['youtube-gate'] && !ytOff['youtube-feeds'] && !ytOff['youtube-fresh-feed'] && ytOff['forget-searches'])
+  ok('the group switch turns all of YouTube off', !ytOff['youtube-gate'] && !ytOff['youtube-feeds'] && !ytOff['youtube-fresh-feed'])
   await settings.click('#youtube .all .switch')
   await wait(400)
 

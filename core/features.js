@@ -3,6 +3,8 @@
 //
 // Groups
 //   id, name, summary       one card in the hub per group, with a switch for all of it
+//   paused                  hidden from the hub, and every feature in it counts as off;
+//                           the code stays in place until it's ready to come back
 //
 // Features
 //   id          folder name in features/, and the key its on/off switch is stored under
@@ -25,6 +27,8 @@ export const GROUPS = [
   },
   {
     id: 'address-bar',
+    // Paused: Yash isn't convinced it works yet. Fix, test with tests/omnibox.js, unpause.
+    paused: true,
     name: 'Address bar',
     summary: 'Curates what the dropdown suggests as you type, so it only offers things you actually go back to.',
   },
@@ -119,3 +123,5 @@ export const FEATURES = [
 
 export const byId = (id) => FEATURES.find((f) => f.id === id)
 export const inGroup = (groupId) => FEATURES.filter((f) => f.group === groupId)
+export const isPaused = (f) => !!GROUPS.find((g) => g.id === f.group)?.paused
+export const VISIBLE_GROUPS = GROUPS.filter((g) => !g.paused)
