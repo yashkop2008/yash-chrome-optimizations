@@ -37,8 +37,13 @@
 
         <div id="groups"></div>
 
-        <section id="updates" class="sec">
-          <div class="sec-head"><div><h2>Updates</h2></div></div>
+        <section id="updates" class="sec page-sec">
+          <div class="sec-head">
+            <button class="sec-toggle" type="button" aria-controls="updates-body">
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><h2>Updates</h2><span class="count mono" id="updates-count"></span>
+            </button>
+          </div>
+          <div class="sec-body" id="updates-body">
           <div class="group">
             <div class="row">
               <div class="row-text">
@@ -48,10 +53,16 @@
               <button class="btn-outline" id="open-updates" type="button">Open updates</button>
             </div>
           </div>
+          </div>
         </section>
 
-        <section id="about" class="sec">
-          <div class="sec-head"><div><h2>About</h2></div></div>
+        <section id="about" class="sec page-sec">
+          <div class="sec-head">
+            <button class="sec-toggle" type="button" aria-controls="about-body">
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><h2>About</h2><span class="count mono" id="about-count"></span>
+            </button>
+          </div>
+          <div class="sec-body" id="about-body">
           <div class="group">
             <div class="row">
               <div class="row-text">
@@ -72,6 +83,7 @@
                 <div class="row-desc" id="source">Set the GitHub repository on the updates page.</div>
               </div>
             </div>
+          </div>
           </div>
         </section>
       </main>

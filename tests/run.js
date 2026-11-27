@@ -107,6 +107,12 @@ function buildRelease(dir) {
   await wait(800)
   ok('hub groups features: YouTube and Address bar', (await settings.locator('main .sec h2').allTextContents()).slice(0, 2).join('|') === 'YouTube|Address bar')
   ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 6 + 2)
+  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 2 && !(await settings.isVisible('#youtube .group')))
+  ok('folded groups show how many features are on', (await settings.textContent('#address-bar .count')) === '2 of 3 on')
+  await settings.click('#youtube .sec-toggle')
+  await settings.click('#address-bar .sec-toggle')
+  await wait(300)
+  ok('the arrow opens a group', await settings.isVisible('#youtube .group'))
   const regs = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id))
   ok('content scripts registered per feature', regs.length === 3, regs.join(', '))
 
@@ -154,6 +160,10 @@ function buildRelease(dir) {
   const fern = await sw.evaluate(async () => (await chrome.storage.local.get('feedCache')).feedCache?.fern?.items || [])
   ok('fern feed reads the channel page', fern.length === 5 && fern[0].channel === 'Fern')
   await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'normal' }))
+
+  ok('no status in the YouTube header while the gate is off', !(await settings.isVisible('#youtube .status')))
+  const folded = await settings.evaluate(() => chrome.storage.local.get('hubCollapsed'))
+  ok('open/folded state is remembered', folded.hubCollapsed?.youtube === false)
 
   /* address bar: one-time searches */
   const hist = (text) => settings.evaluate((t) => chrome.history.search({ text: t, startTime: 0, maxResults: 1000 }).then((r) => r.map((h) => h.url)), text)

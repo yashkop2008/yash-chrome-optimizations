@@ -70,14 +70,65 @@ main {
 }
 .sec + .sec,
 #groups + .sec {
-  margin-top: 36px;
+  margin-top: 8px;
+}
+main .sec {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+main .sec:not(.folded) {
+  padding-bottom: 24px;
 }
 .sec-head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  min-height: 40px;
+  padding: 0 4px 0 0;
+}
+.sec-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: -8px;
+  padding: 6px 10px 6px 8px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--dur-hover);
+}
+.sec-toggle:hover {
+  background: var(--surface-2);
+}
+.sec-toggle h2 {
+  margin: 0;
+}
+.chev {
+  flex: none;
+  color: var(--text-3);
+  transform: rotate(90deg);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.folded .chev {
+  transform: none;
+}
+.count {
+  color: var(--text-3);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+.sec-body {
+  padding-top: 4px;
+}
+.sec-body .lead {
+  margin: 0 0 12px;
+}
+.folded .sec-body {
+  display: none;
 }
 .sec-head-right {
   display: flex;
@@ -85,7 +136,7 @@ main {
   gap: 14px;
 }
 h2 {
-  margin: 0 0 2px;
+  margin: 0 0 12px;
   font-size: var(--t-lg);
   font-weight: 600;
 }
