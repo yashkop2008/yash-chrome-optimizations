@@ -14,3 +14,12 @@ replacements) and then esbuild (ESM, minified); the commands are at the top of
    a whip tail.
 4. Fins with no reach are skipped (a zero-size triangle otherwise counted as covering
    everything).
+5. `orca` and `koi` kinds, and what they need from the renderer: per-shape body-wave
+   strength, rounded paddle fins, tail lobes that pulse with the stroke (orca flukes),
+   a dark-skin option, pale and mid-grey markings (orca eye patches and saddle; koi
+   varieties from smooth noise: kohaku, sanke, showa, tancho, ogon), an orca's blow
+   drawn as spray, floating food, and a `decor` option drawn over everything on the
+   same cell grid (the koi pond's lily pads, in `features/new-tab/lily-pads.js`).
+6. Orca and koi behaviour: orcas travel as a pod on a stiff body and surface to
+   breathe; koi cruise slowly, and a click (`splash`) scatters food they come to eat.
+   A pond with no fish doesn't reseed on resize.

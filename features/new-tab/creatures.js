@@ -1,6 +1,7 @@
 // The ASCII creatures new tabs take turns with. Adding one = one entry here:
 // an id, a name for the hub, and start(canvas, theme) returning its engine
 // (anything with destroy()). Engines live in vendor/, bundled to plain JS.
+import { lilyPads } from './lily-pads.js'
 
 const ocean = async (canvas, theme, sharks, options = {}) => {
   const { OceanEngine } = await import('../../vendor/ascii-sharks/ascii-sharks.js')
@@ -57,6 +58,36 @@ export const CREATURES = [
         { kind: 'manta', size: 0.62 },
         { kind: 'manta', size: 0.48 },
       ]),
+  },
+  {
+    // An orca pod (added to the vendored engine): black and white, travelling together,
+    // a calf among them, surfacing now and then to blow. They hunt the mackerel.
+    id: 'orcas',
+    name: 'Orcas',
+    start: (canvas, theme) =>
+      ocean(
+        canvas,
+        theme,
+        [
+          { kind: 'orca', size: 0.92 },
+          { kind: 'orca', size: 0.8 },
+          { kind: 'orca', size: 0.52 },
+        ],
+        { fishSpecies: ['mackerel', 'silverside'], contain: true },
+      ),
+  },
+  {
+    // A koi pond from above (koi added to the vendored engine): slow koi of different
+    // varieties under lily pads. Click to scatter food and they come to it.
+    id: 'koi-pond',
+    name: 'Koi pond',
+    start: (canvas, theme) =>
+      ocean(
+        canvas,
+        theme,
+        [0.9, 0.82, 0.76, 0.7, 0.62, 0.56].map((size) => ({ kind: 'koi', size })),
+        { fish: 0, contain: true, decor: lilyPads() },
+      ),
   },
 ]
 

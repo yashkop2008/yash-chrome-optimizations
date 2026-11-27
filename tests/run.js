@@ -316,7 +316,7 @@ function buildRelease(dir) {
   ok('consecutive new tabs take turns', tabs.map((t) => t.creature).join() === 'sharks,spiders,whale-sharks', tabs.map((t) => t.creature).join())
   // Every creature draws something on its own, without errors.
   const drawn = {}
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {
     await settings.evaluate((n) => chrome.storage.local.set({ ntNext: n }), i)
     const c = await ctx.newPage()
     await c.goto('chrome://newtab/').catch(() => {})
@@ -330,7 +330,32 @@ function buildRelease(dir) {
     })
     await c.close()
   }
-  ok('every creature draws', ['sharks', 'spiders', 'whale-sharks', 'golden-orbs', 'bait-ball', 'manta-rays'].every((k) => drawn[k] > 20), JSON.stringify(drawn))
+  ok('every creature draws', ['sharks', 'spiders', 'whale-sharks', 'golden-orbs', 'bait-ball', 'manta-rays', 'orcas', 'koi-pond'].every((k) => drawn[k] > 20), JSON.stringify(drawn))
+  // The pond and the pod behave: food scattered by a click gets eaten, orcas come up to breathe.
+  const life = await settings.evaluate(async () => {
+    const { OceanEngine } = await import('../vendor/ascii-sharks/ascii-sharks.js')
+    const cv = document.createElement('canvas')
+    cv.style.cssText = 'position:fixed;left:0;top:0;width:900px;height:600px;pointer-events:none'
+    document.body.append(cv)
+    const pond = new OceanEngine(cv, [{ kind: 'koi', size: 0.7 }, { kind: 'koi', size: 0.6 }], { fish: 0, contain: true, pointer: false })
+    pond.world.splash(450, 300)
+    const scattered = pond.world.food.length
+    for (let i = 0; i < 60 * 25; i++) pond.world.step(1 / 60)
+    const left = pond.world.food.length
+    pond.destroy()
+    const pod = new OceanEngine(cv, [{ kind: 'orca', size: 1 }, { kind: 'orca', size: 0.6 }], { contain: true, pointer: false })
+    let breaths = 0
+    for (let i = 0; i < 60 * 30; i++) {
+      pod.world.step(1 / 60)
+      breaths += pod.world.events.filter((e) => e.kind === 'breath').length
+      pod.world.events.length = 0
+    }
+    pod.destroy()
+    cv.remove()
+    return { scattered, left, breaths }
+  })
+  ok('koi pond: a click scatters food and the koi eat it', life.scattered >= 6 && life.left < life.scattered, JSON.stringify(life))
+  ok('orcas surface to breathe', life.breaths >= 2, JSON.stringify(life))
   const nt = tabs[2].page
   const ntInfo = await nt.evaluate(() => {
     const c = document.querySelector('.creatures')
