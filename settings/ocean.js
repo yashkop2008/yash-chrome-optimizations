@@ -30,4 +30,4 @@ dark.addEventListener('change', start)
 start()
 
 // Only in the empty space: clipped around the sidebar and the content.
-keepToNegativeSpace(canvas, () => [document.querySelector('.side'), document.querySelector('main')], { offsetTop: 44 })
+keepToNegativeSpace(canvas, () => [document.querySelector('main')], { offsetTop: 44 })

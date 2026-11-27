@@ -1,5 +1,5 @@
 // The focus gate's "which sites, and when" controls in the hub.
-import { gateSites, gateHours, normaliseSite, DEFAULT_HOURS, siteLabel } from './state.js'
+import { gateSites, gateHours, normaliseSite, DEFAULT_HOURS } from './state.js'
 
 const X =
   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
@@ -11,7 +11,6 @@ export async function mountSites(box) {
     <div class="prow">
       <div class="prow-text">
         <div class="prow-title">Sites</div>
-        <div class="prow-desc">Each one lands on the gate first.</div>
       </div>
     </div>
     <div class="chips" data-el="chips"></div>
@@ -19,7 +18,6 @@ export async function mountSites(box) {
       <input class="field" data-el="input" placeholder="Add a site, e.g. tracker.gg" spellcheck="false" aria-label="Add a site" />
       <button class="btn-outline" type="submit">Add</button>
     </form>
-    <div class="suggest" data-el="suggest" hidden><span class="prow-desc">Your most visited:</span></div>
     <div class="prow hours-row">
       <div class="prow-text">
         <div class="prow-title">Only during school hours</div>
@@ -63,20 +61,6 @@ export async function mountSites(box) {
       }),
     )
     if (!sites.length) el.chips.textContent = 'No sites. The gate has nothing to guard.'
-    let top = []
-    try {
-      top = (await chrome.topSites.get()).map((t) => normaliseSite(t.url)).filter((h) => h && !sites.includes(h))
-    } catch {}
-    el.suggest.querySelectorAll('button').forEach((b) => b.remove())
-    for (const h of [...new Set(top)].slice(0, 5)) {
-      const b = document.createElement('button')
-      b.type = 'button'
-      b.className = 'chip chip-add'
-      b.textContent = `+ ${h}`
-      b.addEventListener('click', () => setSites([...sites, h]))
-      el.suggest.append(b)
-    }
-    el.suggest.hidden = !el.suggest.querySelector('button')
   }
 
   async function renderHours() {
@@ -86,9 +70,7 @@ export async function mountSites(box) {
     el.days.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(h.days.includes(Number(b.dataset.day)))))
     if (document.activeElement !== el.from) el.from.value = h.from
     if (document.activeElement !== el.to) el.to.value = h.to
-    el['hours-desc'].textContent = h.on
-      ? 'Outside these hours every site opens normally.'
-      : `Off: the gate guards ${siteLabel('youtube.com')} and the rest all the time.`
+    el['hours-desc'].textContent = h.on ? 'Outside these hours every site opens normally.' : 'Off: the gate is always up.'
   }
 
   el.form.addEventListener('submit', async (e) => {

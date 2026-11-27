@@ -48,34 +48,9 @@ body {
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 720px);
-  justify-content: center;
-  gap: 32px;
+  max-width: 720px;
+  margin: 0 auto;
   padding: 0 20px;
-}
-.side {
-  position: sticky;
-  top: 44px;
-  align-self: start;
-  display: grid;
-  gap: 2px;
-  padding: 20px 0;
-}
-.side a {
-  padding: 6px 10px;
-  border-radius: var(--r-md);
-  color: var(--text-2);
-  text-decoration: none;
-  transition: background var(--dur-hover), color var(--dur-hover);
-}
-.side a:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-.side a.active {
-  background: var(--surface-2);
-  color: var(--text);
 }
 
 main {
@@ -140,9 +115,6 @@ main .sec:not(.folded) {
 .sec-body {
   padding-top: 4px;
 }
-.sec-body .lead {
-  margin: 0 0 12px;
-}
 .folded .sec-body {
   display: none;
 }
@@ -155,12 +127,6 @@ h2 {
   margin: 0 0 12px;
   font-size: var(--t-lg);
   font-weight: 600;
-}
-.lead {
-  margin: 0;
-  max-width: 60ch;
-  color: var(--text-3);
-  font-size: var(--t-sm);
 }
 .all {
   display: flex;
@@ -249,14 +215,6 @@ h2 {
 .row-desc a {
   color: var(--text-2);
 }
-.id {
-  padding: 4px 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-md);
-  background: var(--bg);
-  font-size: var(--t-xs);
-  user-select: all;
-}
 .row .switch {
   flex: none;
 }
@@ -290,7 +248,11 @@ h2 {
   font-size: var(--t-sm);
 }
 
-/* A feature's panel: extra controls under its row while it's on. */
+/* A feature's panel: extra controls under its row while it's on. A panel with
+   nothing to show yet marks itself blank. */
+.panel.blank {
+  display: none;
+}
 .panel {
   margin: 0 16px 14px;
   padding: 12px 14px;
@@ -310,12 +272,12 @@ h2 {
   margin: 10px 0 0;
 }
 .add + .prow,
-.suggest + .prow,
 .chips + .prow {
   margin-top: 12px;
 }
 .prow-title {
   font-weight: 500;
+  white-space: nowrap;
 }
 .prow-desc {
   color: var(--text-3);
@@ -358,29 +320,11 @@ h2 {
   background: var(--chip-hover);
   color: var(--text);
 }
-.chip-add {
-  padding: 0 10px;
-  border-style: dashed;
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
-}
-.chip-add:hover {
-  border-style: solid;
-  color: var(--text);
-}
 .add {
   display: flex;
   gap: 8px;
   margin-top: 10px;
   max-width: 420px;
-}
-.suggest {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
 }
 
 /* Focus gate: sites and school hours. */
@@ -533,10 +477,6 @@ li:hover .icon-btn,
   background: var(--chip-hover);
   color: var(--text);
 }
-.empty {
-  margin: 4px 2px 0;
-  font-size: var(--t-sm);
-}
 
 .foot {
   display: flex;
@@ -569,15 +509,6 @@ li:hover .icon-btn,
 }
 
 @media (max-width: 760px) {
-  .layout {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  .side {
-    position: static;
-    display: flex;
-    padding: 12px 0 0;
-  }
   .row {
     flex-wrap: wrap;
   }

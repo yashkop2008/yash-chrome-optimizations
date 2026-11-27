@@ -25,23 +25,22 @@ export async function mount(box, ctx = {}) {
       </div>
       <button class="btn-outline" data-el="end" type="button">End now</button>
     </section>
-    <section class="stats" aria-label="Today">
+    <section class="stats" aria-label="Today" data-el="stats">
       <div class="stat"><div class="num mono" data-el="knocks">0</div><div class="lbl">Knocks</div></div>
       <div class="stat"><div class="num mono" data-el="back">0</div><div class="lbl">Turned back</div></div>
       <div class="stat"><div class="num mono" data-el="passes">0</div><div class="lbl">Fell in</div></div>
     </section>
     <p class="note muted" data-el="note"></p>
-    <section class="parked">
+    <section class="parked" data-el="parked">
       <div class="section-title"><span>Parked for later</span><span class="mono muted" data-el="count"></span></div>
       <ul data-el="list"></ul>
-      <p class="empty muted" data-el="empty">Nothing parked. When the urge hits, write it down on the gate instead of following it.</p>
     </section>
     <div class="foot">
       <button class="hold" data-el="pause" type="button"><span data-el="pause-label"></span></button>
       <button class="btn-outline" data-el="resume" type="button" hidden>Guard YouTube again now</button>
     </div>`
   await mountSites(box.querySelector('.gate-sites'))
-  const el = Object.fromEntries([...box.querySelectorAll(':scope > [data-el], :scope > section [data-el], :scope > .foot [data-el], :scope > p[data-el]')].map((n) => [n.dataset.el, n]))
+  const el = Object.fromEntries([...box.querySelectorAll(':scope > [data-el], :scope > section [data-el], :scope > .foot [data-el]')].map((n) => [n.dataset.el, n]))
   let state = await load()
   let holding = false
   let progress = 0
@@ -62,12 +61,13 @@ export async function mount(box, ctx = {}) {
         state.pass.kind === 'search' ? 'YouTube search pass, blinders on' : `Fall-in pass · ${siteLabel(state.pass.site || 'youtube.com')}`
       el['pass-time'].textContent = `${clock(state.pass.until - now)} left`
     }
+    el.stats.hidden = day.knocks === 0
     el.knocks.textContent = day.knocks
     el.back.textContent = day.back
     el.passes.textContent = day.passes
     el.note.textContent =
       day.knocks === 0
-        ? 'No knocks yet today. Keep it that way.'
+        ? 'No knocks yet today.'
         : `You turned back ${Math.round((day.back / day.knocks) * 100)}% of the time today. ` +
           `Falling in next takes a ${holdSecondsFor(day.passes)}s hold.`
 
@@ -93,7 +93,7 @@ export async function mount(box, ctx = {}) {
       }),
     )
     el.count.textContent = state.parked.length || ''
-    el.empty.hidden = state.parked.length > 0
+    el.parked.hidden = !state.parked.length
     el.pause.hidden = paused
     el.resume.hidden = !paused
     if (!holding && !paused) el['pause-label'].textContent = `Hold to pause the gate for ${PAUSE_MINUTES / 60} hour`

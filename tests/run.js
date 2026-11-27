@@ -129,7 +129,7 @@ function buildRelease(dir) {
   )
   ok('cut-outs that overlap still hide the fish (each spot covered once)', overlap.join() === '1,1,1,0', overlap.join())
   ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 3 && !(await settings.isVisible('#youtube .group')))
-  ok('folded groups show how many features are on', (await settings.textContent('#youtube .count')) === '2 of 2 on')
+  ok('folded groups say nothing when everything is on', (await settings.textContent('#youtube .count')) === '')
   await settings.click('#youtube .sec-toggle')
   await settings.click('#focus .sec-toggle')
   await wait(300)
@@ -235,6 +235,7 @@ function buildRelease(dir) {
   await wait(600)
   const ytOff = await settings.evaluate(() => import('../core/settings.js').then((m) => m.enabledMap()))
   ok('the group switch turns all of YouTube off', !ytOff['youtube-feeds'] && !ytOff['youtube-fresh-feed'] && ytOff['youtube-gate'])
+  ok('a group says how many are on once some are off', (await settings.textContent('#youtube .count')) === '0 of 2 on')
   await settings.click('#youtube .all .switch')
   await wait(400)
 

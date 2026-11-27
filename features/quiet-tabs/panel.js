@@ -14,14 +14,13 @@ export async function mount(box) {
     <div class="prow">
       <div class="prow-text">
         <div class="prow-title">Park a tab after</div>
-        <div class="prow-desc">Pinned tabs, tabs playing sound and tabs in a group are never parked.</div>
+        <div class="prow-desc">Never pinned, playing or grouped tabs.</div>
       </div>
       <div class="pseg" role="group" aria-label="Park a tab after" data-el="idle"></div>
     </div>
-    <section class="parked">
+    <section class="parked" data-el="parked">
       <div class="section-title"><span>Parked tabs</span><button class="link" type="button" data-el="all" hidden>Reopen all</button></div>
       <ul data-el="list"></ul>
-      <p class="empty muted" data-el="empty">Nothing parked yet.</p>
     </section>`
   const el = Object.fromEntries([...box.querySelectorAll('[data-el]')].map((n) => [n.dataset.el, n]))
   for (const h of IDLE_CHOICES) {
@@ -54,7 +53,7 @@ export async function mount(box) {
         return li
       }),
     )
-    el.empty.hidden = s.parked.length > 0
+    el.parked.hidden = !s.parked.length
     el.all.hidden = s.parked.length < 2
   }
   chrome.storage.onChanged.addListener((c) => ('parkedTabs' in c || 'tabsIdleHours' in c) && render())

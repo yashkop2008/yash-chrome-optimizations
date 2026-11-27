@@ -6,7 +6,6 @@ export async function mount(box) {
     <div class="prow">
       <div class="prow-text">
         <div class="prow-title">In the rotation</div>
-        <div class="prow-desc">Each new tab is the next one in line.</div>
       </div>
       <div class="pseg" role="group" aria-label="Creatures in the rotation"></div>
     </div>`

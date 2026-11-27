@@ -13,12 +13,9 @@
       <div class="brand">
         <span>Yash's Chrome</span>
       </div>
-      <span class="mono muted" id="ver"></span>
     </header>
 
     <div class="layout">
-      <nav class="side" aria-label="Sections" id="nav"></nav>
-
       <main>
         <section class="banner" id="update-banner" hidden>
           <div>
@@ -52,7 +49,7 @@
             <div class="row">
               <div class="row-text">
                 <div class="row-title" id="upd-title">Version</div>
-                <div class="row-desc" id="upd-desc">New versions install from GitHub with one click.</div>
+                <div class="row-desc" id="upd-desc"></div>
               </div>
               <button class="btn-outline" id="open-updates" type="button">Open updates</button>
             </div>
@@ -67,36 +64,6 @@
           </div>
         </section>
 
-        <section id="about" class="sec page-sec">
-          <div class="sec-head">
-            <button class="sec-toggle" type="button" aria-controls="about-body">
-              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><h2>About</h2><span class="count mono" id="about-count"></span>
-            </button>
-          </div>
-          <div class="sec-body" id="about-body">
-          <div class="group">
-            <div class="row">
-              <div class="row-text">
-                <div class="row-title">Extension ID</div>
-                <div class="row-desc">Fixed by the manifest key, so moving the folder never resets your data.</div>
-              </div>
-              <code class="mono id" id="ext-id"></code>
-            </div>
-            <div class="row">
-              <div class="row-text">
-                <div class="row-title">Your data</div>
-                <div class="row-desc">Settings, stats and lists stay in this browser. The only outside requests are to GitHub for updates and to YouTube for the YouTube features.</div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-text">
-                <div class="row-title">Source</div>
-                <div class="row-desc" id="source">Set the GitHub repository on the updates page.</div>
-              </div>
-            </div>
-          </div>
-          </div>
-        </section>
       </main>
     </div>
 

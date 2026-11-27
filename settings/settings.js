@@ -10,8 +10,6 @@ import { mountThemeRow } from './theme-status.js'
 const $ = (id) => document.getElementById(id)
 const openUpdates = () => chrome.tabs.create({ url: chrome.runtime.getURL(UPDATES_PAGE) })
 
-$('ver').textContent = `v${currentVersion()}`
-$('ext-id').textContent = chrome.runtime.id
 $('open-updates').addEventListener('click', openUpdates)
 $('update-install').addEventListener('click', openUpdates)
 
@@ -56,7 +54,6 @@ function makeSwitch(label, onToggle) {
 }
 
 function buildGroups() {
-  const nav = $('nav')
   const out = []
   for (const g of GROUPS) {
     const sec = document.createElement('section')
@@ -69,15 +66,13 @@ function buildGroups() {
         </button>
         <div class="sec-head-right">
           <div class="status" hidden><span class="dot"></span><span class="status-text"></span></div>
-          <label class="all"><span>All</span></label>
+          <label class="all"></label>
         </div>
       </div>
       <div class="sec-body" id="${g.id}-body">
-        <p class="lead"></p>
         <div class="group"></div>
       </div>`
     sec.querySelector('h2').textContent = g.name
-    sec.querySelector('.lead').textContent = g.summary
     groupCounts.set(g.id, sec.querySelector('.count'))
     setFolded(sec, isFolded(g.id), false)
     sec.querySelector('.sec-toggle').addEventListener('click', () => setFolded(sec, !sec.classList.contains('folded')))
@@ -117,19 +112,6 @@ function buildGroups() {
       card.append(wrap)
     }
     out.push(sec)
-
-    const link = document.createElement('a')
-    link.href = `#${g.id}`
-    link.textContent = g.name
-    // Jumping to a group from the sidebar opens it.
-    link.addEventListener('click', () => setFolded(sec, false))
-    nav.append(link)
-  }
-  for (const [id, label] of [['updates', 'Updates'], ['about', 'About']]) {
-    const link = document.createElement('a')
-    link.href = `#${id}`
-    link.textContent = label
-    nav.append(link)
   }
   $('groups').replaceChildren(...out)
 }
@@ -157,7 +139,8 @@ async function syncSwitches() {
     const list = inGroup(g.id)
     const count = list.filter((f) => on[f.id]).length
     groupSwitches.get(g.id).setAttribute('aria-checked', String(count > 0))
-    groupCounts.get(g.id).textContent = `${count} of ${list.length} on`
+    // Only worth saying when something is off.
+    groupCounts.get(g.id).textContent = count < list.length ? `${count} of ${list.length} on` : ''
   }
 }
 
@@ -180,36 +163,15 @@ async function renderUpdates() {
     $('upd-desc').textContent = 'Open the updates page and press Install.'
   } else {
     $('upd-title').textContent = `Version ${v}`
-    $('upd-desc').textContent = c.repo
-      ? 'Up to date as of the last check. Checks every six hours.'
-      : 'Set the GitHub repository on the updates page to turn on one-click updates.'
+    if (c.repo) {
+      const a = document.createElement('a')
+      a.href = `https://github.com/${c.repo}`
+      a.target = '_blank'
+      a.rel = 'noreferrer'
+      a.textContent = c.repo
+      $('upd-desc').replaceChildren('Up to date. Checks ', a, ' every six hours.')
+    } else $('upd-desc').textContent = 'Set the GitHub repository on the updates page to turn on one-click updates.'
   }
-  if (c.repo) {
-    const a = document.createElement('a')
-    a.href = `https://github.com/${c.repo}`
-    a.target = '_blank'
-    a.rel = 'noreferrer'
-    a.textContent = `github.com/${c.repo}`
-    $('source').replaceChildren(a)
-  }
-}
-
-/* ---------- sidebar highlight ---------- */
-
-function watchSections() {
-  // The current section is the last one whose top has scrolled past the header.
-  const links = [...document.querySelectorAll('.side a')]
-  const sections = [...document.querySelectorAll('main .sec[id]')]
-  const update = () => {
-    let current = sections[0]?.id
-    for (const sec of sections) if (sec.getBoundingClientRect().top <= 120) current = sec.id
-    const scrollable = document.documentElement.scrollHeight > innerHeight + 8
-    if (scrollable && innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = sections.at(-1)?.id
-    links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${current}`))
-  }
-  addEventListener('scroll', update, { passive: true })
-  addEventListener('resize', update)
-  update()
 }
 
 /* ---------- health ---------- */
@@ -245,12 +207,10 @@ chrome.storage.onChanged.addListener((c) => {
 collapsed = (await chrome.storage.local.get('hubCollapsed')).hubCollapsed || {}
 buildGroups()
 setInterval(renderHealth, 60000)
-// Updates and About fold the same way as the groups.
+// Updates folds the same way as the groups.
 for (const sec of document.querySelectorAll('.page-sec')) {
   setFolded(sec, isFolded(sec.id), false)
   sec.querySelector('.sec-toggle').addEventListener('click', () => setFolded(sec, !sec.classList.contains('folded')))
-  document.querySelector(`.side a[href="#${sec.id}"]`)?.addEventListener('click', () => setFolded(sec, false))
 }
-watchSections()
 syncSwitches().then(renderHealth)
 renderUpdates()

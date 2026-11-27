@@ -36,8 +36,8 @@
         <ul class="notes" id="notes" hidden></ul>
       </section>
 
-      <section class="group" aria-labelledby="src-title">
-        <div class="group-title" id="src-title">Where updates come from</div>
+      <details class="group" id="source">
+        <summary class="group-title">Where updates come from</summary>
         <form id="config" autocomplete="off">
           <label class="row">
             <span class="row-text">
@@ -74,7 +74,7 @@
           </span>
           <button class="btn-outline" id="pick" type="button">Choose folder…</button>
         </div>
-      </section>
+      </details>
     </main>
 
     <script type="module" src="updater/updates.js"></script>

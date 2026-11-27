@@ -2,7 +2,7 @@
 // Adding a feature = a folder in features/ plus one entry here.
 //
 // Groups
-//   id, name, summary       one card in the hub per group, with a switch for all of it
+//   id, name                one section in the hub per group, with a switch for all of it
 //   paused                  hidden from the hub, and every feature in it counts as off;
 //                           the code stays in place until it's ready to come back
 //
@@ -10,7 +10,7 @@
 //   id          folder name in features/, and the key its on/off switch is stored under
 //   group       which group card it sits in
 //   name        shown in the hub, sentence case
-//   summary     one line, what it does for you
+//   summary     one short line, what it does for you
 //   enabled     default for a fresh install
 //   content     content scripts, registered only while the feature is on
 //               (paths are relative to the extension root)
@@ -23,24 +23,20 @@ export const GROUPS = [
   {
     id: 'focus',
     name: 'Focus',
-    summary: 'Stands between you and the sites that pull you away, and keeps your tabs from piling up.',
   },
   {
     id: 'youtube',
     name: 'YouTube',
-    summary: 'Keeps YouTube from eating schoolwork, and makes the home page worth opening.',
   },
   {
     id: 'new-tab',
     name: 'New tab',
-    summary: 'Chrome’s new tab, replaced by ASCII creatures that take turns. Nothing else unless you go looking.',
   },
   {
     id: 'address-bar',
     // Paused: Yash isn't convinced it works yet. Fix, test with tests/omnibox.js, unpause.
     paused: true,
     name: 'Address bar',
-    summary: 'Curates what the dropdown suggests as you type, so it only offers things you actually go back to.',
   },
 ]
 
@@ -49,8 +45,7 @@ export const FEATURES = [
     id: 'youtube-gate', // the id predates the gate covering more than YouTube; kept so stats carry over
     group: 'focus',
     name: 'Focus gate',
-    summary:
-      'Opening a listed site lands on a gate instead: go back to work, park the urge, or hold to fall in for a timed pass. On YouTube you can also search one thing with blinders.',
+    summary: 'Listed sites open on a gate first: back to work, park the urge, or hold for a timed pass.',
     enabled: true,
     // Its content script is registered by its background for exactly the listed sites.
     panel: 'features/youtube-gate/panel.js',
@@ -59,8 +54,7 @@ export const FEATURES = [
     id: 'quiet-tabs',
     group: 'focus',
     name: 'Quiet tabs',
-    summary:
-      'Tabs you haven’t touched in a day close into a list you can reopen from, duplicate tabs merge, and extra empty new tabs go.',
+    summary: 'Untouched tabs close into a list you can reopen, and duplicates merge.',
     enabled: true,
     panel: 'features/quiet-tabs/panel.js',
   },
@@ -68,7 +62,7 @@ export const FEATURES = [
     id: 'youtube-feeds',
     group: 'youtube',
     name: 'Cats or Fern feed',
-    summary: 'Swap the home page for a feed of only cat videos or only videos by Fern.',
+    summary: 'A YouTube home page of only cats, or only Fern.',
     enabled: true,
     content: [
       {
@@ -84,7 +78,7 @@ export const FEATURES = [
     id: 'youtube-fresh-feed',
     group: 'youtube',
     name: 'Fresh home feed',
-    summary: 'Videos you scrolled past without clicking are hidden the next time you open the home page.',
+    summary: 'Videos you scrolled past are gone next time.',
     enabled: true,
     content: [
       {
@@ -100,7 +94,7 @@ export const FEATURES = [
     id: 'newtab-creatures',
     group: 'new-tab',
     name: 'Rotating creatures',
-    summary: 'Every new tab is the next creature in line: sharks, then spiders, and whatever gets added. They scatter from your cursor.',
+    summary: 'Each new tab is the next ASCII creature in line.',
     enabled: true,
     panel: 'features/new-tab/panel.js',
   },
@@ -108,7 +102,7 @@ export const FEATURES = [
     id: 'newtab-shortcuts',
     group: 'new-tab',
     name: 'Quiet shortcuts',
-    summary: 'Your most visited sites as plain names along the bottom, only when your mouse goes there.',
+    summary: 'Your top sites along the bottom, only when your mouse goes there.',
     enabled: true,
   },
   {
@@ -148,7 +142,6 @@ export const FEATURES = [
   },
 ]
 
-export const byId = (id) => FEATURES.find((f) => f.id === id)
 export const inGroup = (groupId) => FEATURES.filter((f) => f.group === groupId)
 export const isPaused = (f) => !!GROUPS.find((g) => g.id === f.group)?.paused
 export const VISIBLE_GROUPS = GROUPS.filter((g) => !g.paused)

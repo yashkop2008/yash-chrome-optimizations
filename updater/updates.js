@@ -149,5 +149,8 @@ form.addEventListener('input', () => {
 })
 form.addEventListener('submit', (e) => e.preventDefault())
 
-showFolder(await getFolder())
+// Set up once and then left alone, so it stays folded unless something is missing.
+const folder = await getFolder()
+showFolder(folder)
+$('source').open = !config.repo || !folder
 refresh()

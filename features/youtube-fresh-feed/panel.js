@@ -13,10 +13,8 @@ export async function mount(box) {
   const render = async () => {
     const { seen = {} } = await chrome.storage.local.get('seen')
     const n = Object.values(seen).filter((r) => !r.c).length
-    desc.textContent = n
-      ? `${n} ${n === 1 ? 'video is' : 'videos are'} hidden from your home feed. They come back after 30 days.`
-      : 'None yet. Scroll the home feed and anything you skip disappears next time.'
-    forget.hidden = !n
+    desc.textContent = `${n} ${n === 1 ? 'video is' : 'videos are'} hidden from your home feed. They come back after 30 days.`
+    box.classList.toggle('blank', !n) // nothing to show until something is hidden
   }
   forget.addEventListener('click', () => chrome.storage.local.set({ seen: {} }))
   chrome.storage.onChanged.addListener((c) => 'seen' in c && render())

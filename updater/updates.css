@@ -206,6 +206,30 @@ main {
   color: var(--text-3);
   font-size: 12.5px;
 }
+summary.group-title {
+  border-bottom: 0;
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--dur-hover);
+}
+summary.group-title::-webkit-details-marker {
+  display: none;
+}
+summary.group-title::before {
+  content: '›';
+  display: inline-block;
+  width: 14px;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+details[open] > summary.group-title {
+  border-bottom: 1px solid var(--line);
+}
+details[open] > summary.group-title::before {
+  transform: rotate(90deg);
+}
+summary.group-title:hover {
+  color: var(--text-2);
+}
 .row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
