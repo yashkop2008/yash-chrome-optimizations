@@ -21,6 +21,24 @@
   const timers = new Map()
 
   const isHome = () => location.pathname === '/'
+  const report = (id, problem) =>
+    chrome.storage.local.get('health').then(({ health = {} }) => {
+      if (problem ? health[id]?.problem === problem : !health[id]) return
+      if (problem) health[id] = { problem, at: Date.now() }
+      else delete health[id]
+      return chrome.storage.local.set({ health })
+    })
+
+  // Health: ten seconds into a home page visit, it should have found videos.
+  let healthTimer = 0
+  function checkHealthSoon() {
+    clearTimeout(healthTimer)
+    healthTimer = setTimeout(() => {
+      if (!isHome() || !enabled || document.hidden) return
+      const found = document.querySelectorAll(CARD).length
+      report('youtube-fresh-feed', found ? null : "YouTube's home page changed: the fresh feed can't find any videos to hide.")
+    }, 10000)
+  }
 
   function idOf(card) {
     const a = card.querySelector('a[href*="watch?v="]')
@@ -106,6 +124,7 @@
     clearInterval(scanTimer)
     if (isHome()) {
       newVisit()
+      checkHealthSoon()
       // The feed fills in lazily and keeps loading as you scroll.
       scanTimer = setInterval(scan, 1200)
     } else {

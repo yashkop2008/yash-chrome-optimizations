@@ -31,9 +31,9 @@ they dislike about Chrome or websites; each fix becomes a feature here.
 ## Addresses
 
 Pages live at the top level so the address bar stays short: `yash.html` (hub),
-`youtube.html` (gate), `updates.html`. Their scripts and styles stay in their folders.
+`focus.html` (gate), `newtab.html`, `updates.html`. Their scripts and styles stay in their folders.
 Anything passed in the address (the gate's destination, `#welcome`, `#updated`) is read
-once and then removed with `history.replaceState`. Only `youtube.html` is web-accessible.
+once and then removed with `history.replaceState`. Only `focus.html` is web-accessible. The gate's feature id is still `youtube-gate` so stored stats carry over.
 
 ## ASCII creatures
 
@@ -48,6 +48,14 @@ panel picks it up automatically. Creatures are drawn greyscale.
 `theme/` is a separate theme extension (Chrome won't mix a theme with other features).
 Its colours come from `core/tokens.css`: `#0f0f0f` frame, `#1a1a1a` toolbar and active
 tab, greys for text and icons. Keep the two in step if the palette changes.
+
+## Health
+
+When a feature depends on something outside its control (YouTube's page structure,
+a page it reads), it reports with `report(featureId, problem)` from `core/health.js`
+(content scripts inline the same few lines) and clears it with `report(featureId, null)`
+once things work. The hub shows open problems on the feature, in amber. Add a check
+like this to any feature that reads a website.
 
 ## Paused work
 

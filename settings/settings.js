@@ -4,6 +4,7 @@
 import { VISIBLE_GROUPS as GROUPS, inGroup } from '../core/features.js'
 import { enabledMap, setEnabled } from '../core/settings.js'
 import { getConfig, getState, newer, currentVersion, UPDATES_PAGE } from '../updater/updater.js'
+import { openProblems, report } from '../core/health.js'
 
 const $ = (id) => document.getElementById(id)
 const openUpdates = () => chrome.tabs.create({ url: chrome.runtime.getURL(UPDATES_PAGE) })
@@ -96,7 +97,7 @@ function buildGroups() {
     for (const f of inGroup(g.id)) {
       const wrap = document.createElement('div')
       wrap.className = 'feature'
-      wrap.innerHTML = `<div class="row"><div class="row-text"><div class="row-title"></div><div class="row-desc"></div></div></div>`
+      wrap.innerHTML = `<div class="row"><div class="row-text"><div class="row-title"></div><div class="row-desc"></div><div class="health" hidden></div></div></div>`
       wrap.querySelector('.row-title').textContent = f.name
       wrap.querySelector('.row-desc').textContent = f.summary
       const sw = makeSwitch(f.name, (on) => setEnabled(f.id, on))
@@ -109,7 +110,7 @@ function buildGroups() {
         wrap.append(panel)
       }
       // A feature can show a status in its group's header, but only while it's on.
-      const r = { sw, panel, mounted: false, on: false, feature: f, clearStatus: () => showStatus('') }
+      const r = { sw, panel, mounted: false, on: false, feature: f, clearStatus: () => showStatus(''), health: wrap.querySelector('.health') }
       r.ctx = { setStatus: (text, mode) => showStatus(r.on ? text : '', mode) }
       rows.set(f.id, r)
       card.append(wrap)
@@ -206,13 +207,39 @@ function watchSections() {
   update()
 }
 
+/* ---------- health ---------- */
+
+const ago = (ts) => {
+  const m = Math.round((Date.now() - ts) / 60000)
+  return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`
+}
+
+async function renderHealth() {
+  const problems = await openProblems()
+  for (const [id, r] of rows) {
+    const p = r.on && problems[id]
+    r.health.hidden = !p
+    if (p) r.health.textContent = `${p.problem} (${ago(p.at)})`
+  }
+  for (const g of GROUPS) {
+    const sec = document.getElementById(g.id)
+    sec?.classList.toggle('unwell', inGroup(g.id).some((f) => rows.get(f.id)?.on && problems[f.id]))
+  }
+  const bg = problems.background
+  $('health-banner').hidden = !bg
+  if (bg) $('health-text').textContent = `${bg.problem} (${ago(bg.at)})`
+}
+$('health-dismiss').addEventListener('click', () => report('background', null))
+
 chrome.storage.onChanged.addListener((c) => {
-  if ('features' in c) syncSwitches()
+  if ('health' in c) renderHealth()
+  if ('features' in c) syncSwitches().then(renderHealth)
   if ('updater' in c) renderUpdates()
 })
 
 collapsed = (await chrome.storage.local.get('hubCollapsed')).hubCollapsed || {}
 buildGroups()
+setInterval(renderHealth, 60000)
 // Updates and About fold the same way as the groups.
 for (const sec of document.querySelectorAll('.page-sec')) {
   setFolded(sec, isFolded(sec.id), false)
@@ -220,5 +247,5 @@ for (const sec of document.querySelectorAll('.page-sec')) {
   document.querySelector(`.side a[href="#${sec.id}"]`)?.addEventListener('click', () => setFolded(sec, false))
 }
 watchSections()
-syncSwitches()
+syncSwitches().then(renderHealth)
 renderUpdates()

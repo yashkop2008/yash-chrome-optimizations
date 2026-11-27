@@ -1,25 +1,40 @@
-import { load, save, bump, today, holdSecondsFor, ordinal, SEARCH_MINUTES } from './state.js'
+import { load, save, bump, today, holdSecondsFor, ordinal, SEARCH_MINUTES, gateSites, hostMap, siteOf, siteLabel } from './state.js'
 
 const $ = (id) => document.getElementById(id)
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
-// Where you were headed. Only YouTube addresses are honoured.
-// The redirect brings the YouTube address after a #. It's kept for this tab
-// and wiped from the address bar, which then reads just …/youtube.html.
+// Where you were headed. Only addresses of a guarded site are honoured.
+// The redirect brings the address after a #. It's kept for this tab and
+// wiped from the address bar, which then reads just …/focus.html.
 const KEY = 'rh-target'
 if (location.hash.length > 1) {
   sessionStorage.setItem(KEY, location.hash.slice(1))
   history.replaceState(null, '', location.pathname)
 }
 
+const map = hostMap(await gateSites())
 function readTarget() {
   try {
     const url = new URL(sessionStorage.getItem(KEY) || '')
-    if (/^https?:$/.test(url.protocol) && /(^|\.)youtube\.com$|^youtu\.be$/.test(url.hostname)) return url
+    if (/^https?:$/.test(url.protocol) && siteOf(url.href, map)) return url
   } catch {}
   return null
 }
 const target = readTarget()
+const site = (target && siteOf(target.href, map)) || 'youtube.com'
+const label = siteLabel(site)
+const isYouTube = site === 'youtube.com'
+
+// The tab (and the history entry for the address you typed) shows the site itself.
+document.title = label
+document.getElementById('site-icon').href = `https://${isYouTube ? 'www.youtube.com' : target?.hostname || site}/favicon.ico`
+$('headline').textContent = `You were about to open ${label}.`
+$('row-search').hidden = !isYouTube
+if (!isYouTube) {
+  $('park').placeholder = 'what you wanted to look at'
+  $('park').setAttribute('aria-label', 'What did you want to look at?')
+  $('fall-desc').textContent = `All of ${label}, timed. You have to hold for it, and the hold gets longer every time today.`
+}
 
 let state = await load()
 const navType = performance.getEntriesByType('navigation')[0]?.type
@@ -78,7 +93,7 @@ async function goBack() {
   render()
   sessionStorage.setItem('rh-leaving', String(Date.now()))
   if (history.length > 1) history.back()
-  // No page behind us (YouTube typed into a fresh tab): close the tab instead.
+  // No page behind us (the site typed into a fresh tab): close the tab instead.
   setTimeout(closeTab, 350)
 }
 
@@ -132,7 +147,7 @@ const whispers = () => {
   const t = (state.task || task.value).trim()
   return [
     [0.12, t ? `“${t}” is still open in another tab.` : 'Whatever you were doing is still open.'],
-    [0.38, 'One video is never one video.'],
+    [0.38, isYouTube ? 'One video is never one video.' : 'One scroll is never one scroll.'],
     [0.62, `This is knock number ${day.knocks} today.`],
     [0.84, 'You can still let go.'],
   ]
@@ -190,8 +205,8 @@ async function landed() {
   const minutes = Number(document.querySelector('input[name="min"]:checked').value)
   $('fall-label').textContent = `Falling in · ${minutes}m`
   whisper(`See you in ${minutes} minutes. The timer is in the corner.`)
-  await chrome.runtime.sendMessage({ type: 'grant-browse', minutes })
-  setTimeout(() => location.replace(target?.href || 'https://www.youtube.com/'), reduced ? 200 : 900)
+  await chrome.runtime.sendMessage({ type: 'grant-browse', minutes, site })
+  setTimeout(() => location.replace(target?.href || `https://${site}/`), reduced ? 200 : 900)
 }
 
 function stepHold(dt) {

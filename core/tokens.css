@@ -84,6 +84,7 @@
     --on-light: #fdfdfd;
     --attention: #1f6fd6;
     --success: #2f8a57;
+    --warning: #a16207;
     --error: #c23a4e;
     --track: color-mix(in srgb, var(--text) 6%, var(--surface-2));
     --fill: color-mix(in srgb, var(--text) 16%, var(--surface-2));

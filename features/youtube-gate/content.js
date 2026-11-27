@@ -1,11 +1,11 @@
-// Runs on YouTube. Three jobs:
-// 1. If there is no pass, bounce to the gate (catches back/forward cache and
-//    anything the network rule missed).
-// 2. While a pass runs, show a small countdown in the corner; a search pass
-//    also puts the blinders on (no feed, no Shorts, no recommendations).
-// 3. When the pass ends, pause the video, say so, and hand back to the gate.
+// Runs on every site the focus gate guards. Three jobs:
+// 1. If there is no pass for this site, bounce to the gate (catches
+//    back/forward cache and anything the network rule missed).
+// 2. While a pass runs, show a small countdown in the corner; a YouTube
+//    search pass also puts the blinders on (no feed, no Shorts, no recommendations).
+// 3. When the pass ends, pause any video, say so, and hand back to the gate.
 ;(() => {
-  const GATE = chrome.runtime.getURL('youtube.html')
+  const GATE = chrome.runtime.getURL('focus.html')
   let pass = null
   let host = null
   let ui = null
@@ -13,18 +13,45 @@
   let ending = false
 
   const passLive = (p) => !!p && p.until > Date.now()
+  const report = (id, problem) =>
+    chrome.storage.local.get('health').then(({ health = {} }) => {
+      if (problem ? health[id]?.problem === problem : !health[id]) return
+      if (problem) health[id] = { problem, at: Date.now() }
+      else delete health[id]
+      return chrome.storage.local.set({ health })
+    })
+
+  // Health: with blinders on, a video page should have the recommendations
+  // column the blinders hide. If it's gone, YouTube renamed it.
+  function checkBlinders() {
+    if (!document.documentElement.classList.contains('rh-blinders') || location.pathname !== '/watch') return
+    setTimeout(() => {
+      const there = document.querySelector('#secondary, ytd-watch-next-secondary-results-renderer, ytm-item-section-renderer')
+      const page = document.querySelector('ytd-watch-flexy, ytm-watch, #player')
+      if (page) report('youtube-gate', there ? null : "YouTube's video page changed: the blinders may miss its recommendations.")
+    }, 6000)
+  }
+  document.addEventListener('yt-navigate-finish', checkBlinders)
+  addEventListener('load', checkBlinders)
+
+  // Which listed site this page belongs to (aliases like youtu.be included).
+  function siteHere(map) {
+    const host = location.hostname.toLowerCase()
+    for (const [h, site] of Object.entries(map || {})) if (host === h || host.endsWith(`.${h}`)) return site
+    return null
+  }
 
   async function check() {
-    const s = await chrome.storage.local.get(['enabled', 'pauseUntil', 'pass', 'features'])
-    const enabled = s.enabled !== false && s.features?.['youtube-gate'] !== false
-    const paused = (s.pauseUntil || 0) > Date.now()
-    pass = passLive(s.pass) ? s.pass : null
-    document.documentElement.classList.toggle('rh-blinders', pass?.kind === 'search' && !paused)
-    if (enabled && !paused && !pass) {
+    const s = await chrome.storage.local.get(['gateStrict', 'pass', 'gateHostMap'])
+    const site = siteHere(s.gateHostMap)
+    // A pass only opens the site it was taken for (older passes were YouTube's).
+    pass = passLive(s.pass) && (s.pass.site || 'youtube.com') === site ? s.pass : null
+    document.documentElement.classList.toggle('rh-blinders', site === 'youtube.com' && pass?.kind === 'search')
+    if (s.gateStrict && site && !pass) {
       location.replace(`${GATE}#${location.href}`)
       return
     }
-    if (pass && !paused) mountPill()
+    if (pass) mountPill()
     else unmountPill()
   }
 
@@ -141,11 +168,14 @@
     veil.className = 'veil'
     const minutes = pass?.minutes
     veil.innerHTML = `<div><h2></h2><p></p></div>`
-    veil.querySelector('h2').textContent = reason === 'ended' ? 'Climbing out.' : "Time's up."
+    veil.querySelector('h2').textContent =
+      reason === 'ended' ? 'Climbing out.' : reason === 'hours' ? 'School hours.' : "Time's up."
     veil.querySelector('p').textContent =
       reason === 'ended'
         ? 'Good call. Back to what you were doing.'
-        : minutes
+        : reason === 'hours'
+          ? 'Your school hours just started. Back to the work.'
+          : minutes
           ? `That was your ${minutes} minutes. Back to the work.`
           : 'Back to the work.'
     ui.root.appendChild(veil)
@@ -164,7 +194,7 @@
       const early = (changes.pass.oldValue?.until || 0) - Date.now() > 2000
       return timeUp(early ? 'ended' : 'expired')
     }
-    if ('pass' in changes || 'pauseUntil' in changes || 'enabled' in changes || 'features' in changes) check()
+    if (['pass', 'gateStrict', 'gateHostMap'].some((k) => k in changes)) check()
   })
 
   // Shorts are the deepest part of the hole: under blinders, open them as a normal video.

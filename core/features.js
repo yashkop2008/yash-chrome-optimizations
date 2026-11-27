@@ -21,6 +21,11 @@ const YOUTUBE = ['*://www.youtube.com/*', '*://m.youtube.com/*', '*://youtube.co
 
 export const GROUPS = [
   {
+    id: 'focus',
+    name: 'Focus',
+    summary: 'Stands between you and the sites that pull you away, and keeps your tabs from piling up.',
+  },
+  {
     id: 'youtube',
     name: 'YouTube',
     summary: 'Keeps YouTube from eating schoolwork, and makes the home page worth opening.',
@@ -41,21 +46,23 @@ export const GROUPS = [
 
 export const FEATURES = [
   {
-    id: 'youtube-gate',
-    group: 'youtube',
-    name: 'YouTube gate',
+    id: 'youtube-gate', // the id predates the gate covering more than YouTube; kept so stats carry over
+    group: 'focus',
+    name: 'Focus gate',
     summary:
-      'Opening YouTube lands on a gate instead: go back to work, park the urge, search one thing with blinders, or hold to fall in for a timed pass.',
+      'Opening a listed site lands on a gate instead: go back to work, park the urge, or hold to fall in for a timed pass. On YouTube you can also search one thing with blinders.',
     enabled: true,
-    content: [
-      {
-        matches: YOUTUBE,
-        js: ['features/youtube-gate/content.js'],
-        css: ['features/youtube-gate/content.css'],
-        runAt: 'document_start',
-      },
-    ],
+    // Its content script is registered by its background for exactly the listed sites.
     panel: 'features/youtube-gate/panel.js',
+  },
+  {
+    id: 'quiet-tabs',
+    group: 'focus',
+    name: 'Quiet tabs',
+    summary:
+      'Tabs you haven’t touched in a day close into a list you can reopen from, duplicate tabs merge, and extra empty new tabs go.',
+    enabled: true,
+    panel: 'features/quiet-tabs/panel.js',
   },
   {
     id: 'youtube-feeds',

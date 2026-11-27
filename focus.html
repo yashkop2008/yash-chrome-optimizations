@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>YouTube</title>
-    <link rel="icon" href="https://www.youtube.com/favicon.ico" />
+    <link rel="icon" id="site-icon" href="https://www.youtube.com/favicon.ico" />
     <link rel="stylesheet" href="core/tokens.css" />
     <link rel="stylesheet" href="features/youtube-gate/gate.css" />
   </head>
@@ -12,7 +12,7 @@
     <header class="bar">
       <div class="brand">
         <span>Yash's Chrome</span>
-        <span class="crumb">YouTube gate</span>
+        <span class="crumb">Focus gate</span>
       </div>
       <div class="meta mono" id="meta"></div>
     </header>
@@ -54,7 +54,7 @@
           </form>
         </div>
 
-        <div class="row">
+        <div class="row" id="row-search">
           <div class="row-text">
             <div class="row-title">Search one specific thing</div>
             <div class="row-desc"><span class="mono" id="search-min">15</span> minutes with the home feed, Shorts and recommendations hidden. For the tutorial you actually need.</div>
@@ -68,7 +68,7 @@
         <div class="row">
           <div class="row-text">
             <div class="row-title">Fall in anyway</div>
-            <div class="row-desc">All of YouTube, timed. You have to hold for it, and the hold gets longer every time today.</div>
+            <div class="row-desc" id="fall-desc">All of YouTube, timed. You have to hold for it, and the hold gets longer every time today.</div>
           </div>
           <div class="row-control">
             <div class="seg" role="radiogroup" aria-label="How long">

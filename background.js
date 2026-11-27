@@ -1,14 +1,21 @@
 // Service worker. Features with background work are imported statically
 // (service workers can't import() on demand) and each checks its own switch.
 import { syncContentScripts } from './core/settings.js'
+import { report } from './core/health.js'
 import { installUpdaterBackground } from './updater/updater.js'
 import './features/youtube-gate/background.js'
+import './features/quiet-tabs/background.js'
 import './features/forget-searches/background.js'
 import './features/site-pages/background.js'
 import './features/forget-pages/background.js'
 import './features/live-suggestions/background.js'
 
 installUpdaterBackground()
+
+// Anything that throws in the background shows up in the hub instead of only
+// in chrome://extensions.
+addEventListener('unhandledrejection', (e) => report('background', e.reason?.message || String(e.reason)))
+addEventListener('error', (e) => report('background', e.message))
 
 const HUB = chrome.runtime.getURL('yash.html')
 

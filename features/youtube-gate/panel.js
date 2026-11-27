@@ -1,6 +1,7 @@
-// YouTube gate's panel in the hub: running pass, today's numbers, the parked
-// list, and the hold-to-pause control.
-import { load, save, today, holdSecondsFor, passActive, pauseActive, clock, PAUSE_MINUTES } from './state.js'
+// Focus gate's panel in the hub: which sites and when, the running pass,
+// today's numbers, the parked list, and the hold-to-pause control.
+import { load, save, today, holdSecondsFor, passActive, pauseActive, clock, PAUSE_MINUTES, siteLabel } from './state.js'
+import { mountSites } from './panel-sites.js'
 
 const PAUSE_HOLD_MS = 5000
 const ICON = (path) =>
@@ -16,6 +17,7 @@ function ago(ts) {
 
 export async function mount(box, ctx = {}) {
   box.innerHTML = `
+    <div class="gate-sites"></div>
     <section class="pass" data-el="pass" hidden>
       <div>
         <div class="pass-title" data-el="pass-title"></div>
@@ -38,7 +40,8 @@ export async function mount(box, ctx = {}) {
       <button class="hold" data-el="pause" type="button"><span data-el="pause-label"></span></button>
       <button class="btn-outline" data-el="resume" type="button" hidden>Guard YouTube again now</button>
     </div>`
-  const el = Object.fromEntries([...box.querySelectorAll('[data-el]')].map((n) => [n.dataset.el, n]))
+  await mountSites(box.querySelector('.gate-sites'))
+  const el = Object.fromEntries([...box.querySelectorAll(':scope > [data-el], :scope > section [data-el], :scope > .foot [data-el], :scope > p[data-el]')].map((n) => [n.dataset.el, n]))
   let state = await load()
   let holding = false
   let progress = 0
@@ -55,7 +58,8 @@ export async function mount(box, ctx = {}) {
     )
     el.pass.hidden = !passing
     if (passing) {
-      el['pass-title'].textContent = state.pass.kind === 'search' ? 'Search pass, blinders on' : 'Fall-in pass'
+      el['pass-title'].textContent =
+        state.pass.kind === 'search' ? 'YouTube search pass, blinders on' : `Fall-in pass · ${siteLabel(state.pass.site || 'youtube.com')}`
       el['pass-time'].textContent = `${clock(state.pass.until - now)} left`
     }
     el.knocks.textContent = day.knocks

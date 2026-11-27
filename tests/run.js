@@ -74,10 +74,15 @@ function buildRelease(dir) {
   await ctx.route(/i\.ytimg\.com/, (r) => r.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"><rect width="480" height="360" fill="#8a7"/></svg>' }))
   await ctx.route(/youtube\.com/, (r) => {
     const u = new URL(r.request().url())
-    if (u.pathname === '/results') return r.fulfill({ contentType: 'text/html', body: dataPage(searchData(u.searchParams.get('search_query'))) })
+    if (u.pathname === '/results') return r.fulfill({ contentType: 'text/html', body: breakYouTube ? '<html><body>redesigned</body></html>' : dataPage(searchData(u.searchParams.get('search_query'))) })
     if (u.pathname.startsWith('/@fern-tv')) return r.fulfill({ contentType: 'text/html', body: dataPage(fernData) })
     if (u.pathname === '/watch') return r.fulfill({ contentType: 'text/html', body: '<html><body>watch</body></html>' })
     r.fulfill({ contentType: 'text/html', body: home })
+  })
+  let breakYouTube = false // makes YouTube's search results unreadable, to trip the health check
+  await ctx.route(/reddit\.com|x\.com|tracker\.gg|example\.org/, (r) => {
+    const u = new URL(r.request().url())
+    r.fulfill({ contentType: 'text/html', body: `<html><head><title>${u.hostname}</title></head><body>${u.pathname}</body></html>` })
   })
   await ctx.route(/google\.com|bing\.com/, (r) => r.fulfill({ contentType: 'text/html', body: '<html><head><title>Search</title></head><body>results</body></html>' }))
   await ctx.route(/api\.github\.com/, (r) => {
@@ -105,9 +110,9 @@ function buildRelease(dir) {
   ok('toolbar icon opens the hub, not a popup', !manifest.action.default_popup)
   const settings = await page('yash.html')
   await wait(800)
-  ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'YouTube|New tab' && !(await settings.locator('#address-bar').count()))
+  ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'Focus|YouTube|New tab' && !(await settings.locator('#address-bar').count()))
   ok('header is just the name, no logo', !(await settings.locator('.bar img').count()))
-  ok('hub has a switch per feature plus one per group', (await settings.locator('.switch').count()) === 5 + 2)
+  ok('hub has a switch per feature plus one per group', (await settings.locator('.row > .switch, .all .switch').count()) === 6 + 3)
   const fish = await settings.evaluate(() => {
     const c = document.querySelector('.ocean')
     const px = c.getContext('2d').getImageData(1, c.height - 2, 1, 1).data
@@ -123,9 +128,10 @@ function buildRelease(dir) {
     }),
   )
   ok('cut-outs that overlap still hide the fish (each spot covered once)', overlap.join() === '1,1,1,0', overlap.join())
-  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 2 && !(await settings.isVisible('#youtube .group')))
-  ok('folded groups show how many features are on', (await settings.textContent('#youtube .count')) === '3 of 3 on')
+  ok('groups start folded', (await settings.locator('#groups .sec.folded').count()) === 3 && !(await settings.isVisible('#youtube .group')))
+  ok('folded groups show how many features are on', (await settings.textContent('#youtube .count')) === '2 of 2 on')
   await settings.click('#youtube .sec-toggle')
+  await settings.click('#focus .sec-toggle')
   await wait(300)
   ok('the arrow opens a group', await settings.isVisible('#youtube .group'))
   const regs = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id))
@@ -144,7 +150,7 @@ function buildRelease(dir) {
   const yt = await ctx.newPage()
   await yt.goto('https://www.youtube.com/').catch(() => {})
   await wait(600)
-  ok('youtube.com lands on the gate', yt.url().endsWith('/youtube.html'), yt.url())
+  ok('youtube.com lands on the gate', yt.url().endsWith('/focus.html'), yt.url())
   await wait(1500)
   const spiders = await yt.evaluate(() => {
     const c = document.querySelector('.spiders')
@@ -160,7 +166,7 @@ function buildRelease(dir) {
   await wait(800)
   ok('gate switched off lets YouTube through', yt.url() === 'https://www.youtube.com/', yt.url())
   const regsOff = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id))
-  ok('switched-off feature unregisters its scripts', !regsOff.some((s) => s.includes('youtube-gate')))
+  ok('switched-off feature unregisters its scripts', !regsOff.some((s) => s.startsWith('gate:')))
 
   /* fresh feed + corner (gate off, so no pass needed) */
   await yt.goto('https://www.youtube.com/')
@@ -191,7 +197,7 @@ function buildRelease(dir) {
   ok('fern feed reads the channel page', fern.length === 5 && fern[0].channel === 'Fern')
   await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'normal' }))
 
-  ok('no status in the YouTube header while the gate is off', !(await settings.isVisible('#youtube .status')))
+  ok('no status in the Focus header while the gate is off', !(await settings.isVisible('#focus .status')))
   const folded = await settings.evaluate(() => chrome.storage.local.get('hubCollapsed'))
   ok('open/folded state is remembered', folded.hubCollapsed?.youtube === false)
 
@@ -220,17 +226,83 @@ function buildRelease(dir) {
   /* gate back on, hub panels */
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
   await wait(900)
-  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 4)
-  ok('gate status shows in the YouTube header', (await settings.textContent('#youtube .status-text')) === 'Guarding')
+  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 5)
+  ok('gate status shows in the Focus header', (await settings.textContent('#focus .status-text')) === 'Guarding')
   await settings.setViewportSize({ width: 1366, height: 2200 })
   await wait(300)
   await shot(settings, 'hub')
   await settings.click('#youtube .all .switch')
   await wait(600)
   const ytOff = await settings.evaluate(() => import('../core/settings.js').then((m) => m.enabledMap()))
-  ok('the group switch turns all of YouTube off', !ytOff['youtube-gate'] && !ytOff['youtube-feeds'] && !ytOff['youtube-fresh-feed'])
+  ok('the group switch turns all of YouTube off', !ytOff['youtube-feeds'] && !ytOff['youtube-fresh-feed'] && ytOff['youtube-gate'])
   await settings.click('#youtube .all .switch')
   await wait(400)
+
+  /* focus gate: every listed site, passes scoped to one site, school hours */
+  await yt.goto('https://www.reddit.com/r/all').catch(() => {})
+  await wait(1200)
+  const redditGate = await yt.evaluate(() => ({ h: document.getElementById('headline')?.textContent, search: document.getElementById('row-search')?.hidden, title: document.title })).catch(() => ({}))
+  ok('other listed sites land on the gate too', yt.url().endsWith('/focus.html') && redditGate.h === 'You were about to open reddit.com.', `${yt.url()} ${redditGate.h}`)
+  ok('the gate takes the site’s name; YouTube-only search hidden elsewhere', redditGate.search === true && redditGate.title === 'reddit.com', JSON.stringify(redditGate))
+  await yt.goto('https://twitter.com/home').catch(() => {})
+  await wait(800)
+  ok('aliases count as the site (twitter.com is x.com)', yt.url().endsWith('/focus.html'))
+  await settings.evaluate(() => chrome.runtime.sendMessage({ type: 'grant-browse', minutes: 5, site: 'reddit.com' }))
+  await wait(800)
+  await yt.goto('https://www.reddit.com/r/all').catch(() => {})
+  await wait(800)
+  const onReddit = yt.url()
+  await yt.goto('https://www.youtube.com/').catch(() => {})
+  await wait(800)
+  ok('a pass opens only the site it was taken for', onReddit === 'https://www.reddit.com/r/all' && yt.url().endsWith('/focus.html'), `${onReddit} / ${yt.url()}`)
+  await settings.evaluate(() => chrome.runtime.sendMessage({ type: 'end-pass' }))
+  await wait(800)
+  await settings.evaluate(() => chrome.storage.local.set({ gateSites: ['youtube.com', 'x.com', 'reddit.com', 'tiktok.com', 'instagram.com', 'tracker.gg'] }))
+  await wait(1200)
+  await yt.goto('https://tracker.gg/valorant').catch(() => {})
+  await wait(800)
+  ok('a site added in the hub is guarded', yt.url().endsWith('/focus.html'), yt.url())
+  await settings.evaluate(() => {
+    const d = new Date()
+    const away = (d.getDay() + 3) % 7 // a day that isn't today
+    return chrome.storage.local.set({ gateHours: { on: true, days: [away], from: '00:00', to: '23:59' } })
+  })
+  await wait(1200)
+  await yt.goto('https://tracker.gg/valorant').catch(() => {})
+  await wait(800)
+  ok('outside school hours sites open normally', yt.url() === 'https://tracker.gg/valorant', yt.url())
+  await settings.evaluate(() => chrome.storage.local.set({ gateHours: { on: true, days: [0, 1, 2, 3, 4, 5, 6], from: '00:00', to: '23:59' } }))
+  await wait(1500)
+  ok('when school hours start, open tabs get the time-up screen and the gate', (await yt.url()).endsWith('/focus.html'), yt.url())
+  await settings.evaluate(() => chrome.storage.local.set({ gateHours: { on: false } }))
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', false)))
+  await wait(800)
+
+  /* health: a feature says when YouTube changed under it */
+  breakYouTube = true
+  await settings.evaluate(() => chrome.storage.local.remove('feedCache'))
+  await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'cats' }))
+  await yt.goto('https://www.youtube.com/').catch(() => {})
+  await wait(2500)
+  const sick = await settings.evaluate(() => chrome.storage.local.get('health').then((h) => h.health || {}))
+  ok('health: a feed that can’t read YouTube reports it', /cat feed/.test(sick['youtube-feeds']?.problem || ''), JSON.stringify(sick))
+  await wait(600)
+  const shown = await settings.evaluate(() => {
+    const row = [...document.querySelectorAll('#youtube .feature')].find((f) => /Cats or Fern/.test(f.textContent))
+    return { text: row?.querySelector('.health')?.hidden === false && row.querySelector('.health').textContent, dot: document.getElementById('youtube').classList.contains('unwell') }
+  })
+  ok('health: the hub shows it on that feature, with a dot on its group', /cat feed/.test(shown.text || '') && shown.dot, JSON.stringify(shown))
+  breakYouTube = false
+  await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'normal' }))
+  await wait(300)
+  await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'cats' }))
+  await yt.goto('https://www.youtube.com/').catch(() => {})
+  await wait(2500)
+  const well = await settings.evaluate(() => chrome.storage.local.get('health').then((h) => h.health || {}))
+  ok('health: it clears itself once things work again', !well['youtube-feeds'], JSON.stringify(well))
+  await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'normal' }))
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
+  await wait(600)
 
   /* new tab: rotating creatures and quiet shortcuts */
   const tabs = []
@@ -305,6 +377,47 @@ function buildRelease(dir) {
   ok('install writes the new version', result.version === '9.9.9')
   ok('install skips repo-only files', !result.names.includes('tests') && !result.names.includes('CLAUDE.md'), result.names.join(' '))
   ok('install refuses a folder holding another extension', /isn’t this extension|different extension/.test(result.wrong), result.wrong)
+
+  /* quiet tabs (last: it closes everything idle, test pages included) */
+  const q = await ctx.newPage()
+  await q.goto(`chrome-extension://${id}/yash.html`)
+  await wait(500)
+  for (const u of ['https://example.org/a', 'https://example.org/b', 'https://example.org/b', 'https://example.org/pinned']) {
+    const t = await ctx.newPage()
+    await t.goto(u).catch(() => {})
+  }
+  await q.evaluate(async () => {
+    const [pinned] = await chrome.tabs.query({ url: 'https://example.org/pinned' })
+    await chrome.tabs.update(pinned.id, { pinned: true })
+    await chrome.storage.local.set({ tabsIdleHours: 0.0003 }) // about a second, for the test
+  })
+  await wait(1500)
+  await q.bringToFront()
+  await wait(300)
+  const tidied = await q.evaluate(() => chrome.runtime.sendMessage({ type: 'quiet-tabs-tidy' }))
+  await wait(800)
+  const afterTidy = await q.evaluate(async () => ({
+    open: (await chrome.tabs.query({})).map((t) => t.url),
+    parked: (await chrome.storage.local.get('parkedTabs')).parkedTabs.map((p) => p.url),
+  }))
+  ok('quiet tabs: duplicates merge (the two example.org/b tabs become one)', tidied.duplicates >= 1 && [...afterTidy.open, ...afterTidy.parked].filter((u) => u === 'https://example.org/b').length === 1, JSON.stringify(tidied))
+  ok('quiet tabs: idle tabs close into the parked list', afterTidy.parked.includes('https://example.org/a') && afterTidy.parked.includes('https://example.org/b') && !afterTidy.open.includes('https://example.org/a'), JSON.stringify(afterTidy))
+  ok('quiet tabs: pinned and current tabs are never touched', afterTidy.open.includes('https://example.org/pinned') && afterTidy.open.some((u) => u.endsWith('/yash.html')))
+  await q.evaluate(() => import('../features/quiet-tabs/tabs.js').then((m) => m.restore('https://example.org/a')))
+  await wait(800)
+  const back = await q.evaluate(async () => ({
+    open: (await chrome.tabs.query({})).map((t) => t.url),
+    parked: (await chrome.storage.local.get('parkedTabs')).parkedTabs.map((p) => p.url),
+  }))
+  ok('quiet tabs: one click reopens a parked tab', back.open.includes('https://example.org/a') && !back.parked.includes('https://example.org/a'))
+  const extra = await q.evaluate(async () => {
+    const a = await chrome.tabs.create({ url: 'chrome://newtab/', active: false })
+    const b = await chrome.tabs.create({ url: 'chrome://newtab/', active: false })
+    await new Promise((r) => setTimeout(r, 1200))
+    const ids = (await chrome.tabs.query({})).map((t) => t.id)
+    return [a.id, b.id].filter((x) => ids.includes(x)).length
+  })
+  ok('quiet tabs: extra empty new tabs go', extra <= 1, `${extra} left`)
 
   ok('no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()

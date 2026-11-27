@@ -28,6 +28,13 @@
   let ensureTimer = 0
 
   const isHome = () => location.pathname === '/'
+  const report = (id, problem) =>
+    chrome.storage.local.get('health').then(({ health = {} }) => {
+      if (problem ? health[id]?.problem === problem : !health[id]) return
+      if (problem) health[id] = { problem, at: Date.now() }
+      else delete health[id]
+      return chrome.storage.local.set({ health })
+    })
   const blinders = () => document.documentElement.classList.contains('rh-blinders')
 
   /* ---------- reading YouTube's own page data ---------- */
@@ -119,8 +126,15 @@
       if (mode !== want) return
       items = list
       await shuffle()
+      report('youtube-feeds', null)
     } catch {
       if (mode === want) failed = true
+      report(
+        'youtube-feeds',
+        want === 'cats'
+          ? "Couldn't read YouTube's search results, so the cat feed is empty. YouTube may have changed its page."
+          : "Couldn't read Fern's channel page. YouTube may have changed it.",
+      )
     } finally {
       if (mode === want) {
         loading = false
