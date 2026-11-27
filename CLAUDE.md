@@ -38,11 +38,10 @@ once and then removed with `history.replaceState`. Only `focus.html` is web-acce
 ## ASCII creatures
 
 New tabs rotate through `CREATURES` in `features/new-tab/creatures.js`. To add one,
-either write it on `AsciiField` (`features/new-tab/ascii/field.js`: implement
-`setup()`, `step(dt)`, `draw()` with `put(ch, x, y, alpha)`; see jellyfish,
-murmuration, fireflies), or vendor an existing engine into `vendor/<name>/` (bundled
-to one ESM file, with the transparent-canvas patch described in the existing vendor
-READMEs and the upstream licence kept). Then add an entry with `id`, `name` and
+vendor its engine into `vendor/<name>/` (bundled to one ESM file, with the
+transparent-canvas patch described in the existing vendor READMEs and the upstream
+licence kept). The bar is the sharks and spiders: Yash removed home-made jellyfish,
+birds and fireflies as not up to that quality, so only add creatures that match it. Then add an entry with `id`, `name` and
 `start(canvas, theme)`. The hub
 panel picks it up automatically. Creatures are drawn greyscale.
 
