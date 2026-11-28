@@ -21,7 +21,7 @@ export async function mount(box) {
     <div class="prow" data-el="token-row" hidden>
       <div class="prow-text">
         <div class="prow-title">Access token</div>
-        <div class="prow-desc">Signed in and still seeing this? In Canvas: Account, Settings, New access token.</div>
+        <div class="prow-desc">In Canvas: Account, Settings, New access token. Kept only in this profile.</div>
       </div>
       <form data-el="token-form" autocomplete="off">
         <input class="field canvas-field" data-el="token" type="password" placeholder="optional" spellcheck="false" aria-label="Canvas access token" />
@@ -34,9 +34,9 @@ export async function mount(box) {
     if (document.activeElement !== el.input) el.input.value = domain
     const c = await cached()
     let text
-    if (!domain) text = 'Not in your history yet. Type your school’s Canvas address.'
+    if (!domain) text = 'Not in this profile’s history. Type your school’s Canvas address.'
     else if (!c || c.domain !== domain) text = 'Checking…'
-    else if (c.state === 'signed-out') text = 'Signed out. Sign in to Canvas in this browser and it shows up.'
+    else if (c.state === 'signed-out') text = 'Not signed in to Canvas in this Chrome profile. Sign in here, or use an access token.'
     const { canvasToken = '' } = await chrome.storage.local.get('canvasToken')
     // Only offered when signing in hasn't been enough (or a token is already in use).
     el['token-row'].hidden = !(canvasToken || (domain && c?.domain === domain && c.state === 'signed-out'))
