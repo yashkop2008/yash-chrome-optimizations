@@ -84,6 +84,35 @@ function buildRelease(dir) {
     const u = new URL(r.request().url())
     r.fulfill({ contentType: 'text/html', body: `<html><head><title>${u.hostname}</title></head><body>${u.pathname}</body></html>` })
   })
+  // Fake Canvas: its planner API as a signed-in browser gets it (with the "while(1);" guard),
+  // or "unauthenticated" when the request carries no session cookie.
+  const H = 36e5
+  const plan = (type, id, title, dueIn, extra = {}) => ({
+    context_type: 'Course', course_id: 7, plannable_id: id, plannable_type: type, new_activity: false,
+    planner_override: null, plannable_date: new Date(Date.now() + dueIn * H).toISOString(), context_name: 'Chemistry',
+    html_url: `/courses/7/${type}s/${id}`, plannable: { id, title, due_at: new Date(Date.now() + dueIn * H).toISOString(), points_possible: 10 },
+    submissions: { submitted: false, excused: false, graded: false, late: false, missing: false, needs_grading: false, has_feedback: false, redo_request: false },
+    ...extra,
+  })
+  const plannerItems = [
+    plan('assignment', 1, 'Late lab report', -48, { submissions: { submitted: false, missing: true } }),
+    plan('assignment', 2, 'Already handed in', 20, { submissions: { submitted: true } }),
+    plan('quiz', 3, 'Reading quiz', 3),
+    plan('assignment', 4, 'Problem set 7', 26),
+    plan('assignment', 5, 'Far-off essay', 24 * 10),
+    plan('planner_note', 6, 'Email Ms. Lee', 50, { submissions: false, context_type: null, context_name: null, html_url: '/api/v1/planner_notes/6' }),
+    plan('assignment', 8, 'Ticked off in Canvas', 30, { planner_override: { marked_complete: true } }),
+    plan('announcement', 9, 'Field trip forms', 5),
+  ]
+  await ctx.route(/school\.instructure\.com/, async (r) => {
+    const u = new URL(r.request().url())
+    const cookie = (await r.request().allHeaders()).cookie || ''
+    if (!u.pathname.startsWith('/api/v1/planner/items')) return r.fulfill({ contentType: 'text/html', body: '<html><body>Canvas</body></html>' })
+    const auth = (await r.request().allHeaders()).authorization || ''
+    if (auth === 'Bearer test-token') return r.fulfill({ contentType: 'application/json', body: JSON.stringify(plannerItems) })
+    if (!/_normandy_session=/.test(cookie)) return r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ status: 'unauthenticated', errors: [{ message: 'user authorization required' }] }) })
+    r.fulfill({ contentType: 'application/json', body: 'while(1);' + JSON.stringify(plannerItems) })
+  })
   await ctx.route(/google\.com|bing\.com/, (r) => r.fulfill({ contentType: 'text/html', body: '<html><head><title>Search</title></head><body>results</body></html>' }))
   await ctx.route(/api\.github\.com/, (r) => {
     const u = new URL(r.request().url())
@@ -112,7 +141,7 @@ function buildRelease(dir) {
   await wait(800)
   ok('hub shows YouTube, and the paused Address bar group is gone', (await settings.locator('#groups .sec h2').allTextContents()).join('|') === 'Focus|YouTube|New tab' && !(await settings.locator('#address-bar').count()))
   ok('header is just the name, no logo', !(await settings.locator('.bar img').count()))
-  ok('hub has a switch per feature plus one per group', (await settings.locator('.row > .switch, .all .switch').count()) === 6 + 3)
+  ok('hub has a switch per feature plus one per group', (await settings.locator('.row > .switch, .all .switch').count()) === 7 + 3)
   const fish = await settings.evaluate(() => {
     const c = document.querySelector('.ocean')
     const px = c.getContext('2d').getImageData(1, c.height - 2, 1, 1).data
@@ -226,7 +255,7 @@ function buildRelease(dir) {
   /* gate back on, hub panels */
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
   await wait(900)
-  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 5)
+  ok('hub shows a panel under each enabled feature that has one', (await settings.locator('.panel:not([hidden])').count()) === 6)
   ok('gate status shows in the Focus header', (await settings.textContent('#focus .status-text')) === 'Guarding')
   await settings.setViewportSize({ width: 1366, height: 2200 })
   await wait(300)
@@ -304,6 +333,45 @@ function buildRelease(dir) {
   await settings.evaluate(() => chrome.storage.local.set({ feedMode: 'normal' }))
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('youtube-gate', true)))
   await wait(600)
+
+  /* Canvas to-do on the new tab */
+  await settings.evaluate(() => chrome.history.addUrl({ url: 'https://school.instructure.com/courses/7' }))
+  await settings.evaluate(() => chrome.storage.local.remove(['canvasDomain', 'canvasCache']))
+  const readTodo = async () => {
+    const t = await ctx.newPage()
+    await t.goto('chrome://newtab/').catch(() => {})
+    await wait(1500)
+    const out = await t.evaluate(() => ({
+      rows: [...document.querySelectorAll('.todo-row')].map((a) => [a.querySelector('.todo-title').textContent, a.querySelector('.todo-due').textContent, a.classList.contains('late'), a.href]),
+      quiet: document.querySelector('.todo-quiet')?.textContent || '',
+      clipped: document.querySelector('.creatures')?.style.clipPath.split('M').length > 2,
+    }))
+    await t.close()
+    return out
+  }
+  const signedOut = await readTodo()
+  const found = await settings.evaluate(() => chrome.storage.local.get('canvasDomain').then((s) => s.canvasDomain))
+  ok('canvas: finds your school’s Canvas in history', found === 'school.instructure.com', found)
+  ok('canvas: signed out, it says so instead of listing', !signedOut.rows.length && /Sign in to Canvas/.test(signedOut.quiet), JSON.stringify(signedOut))
+  // A token, for a Canvas where signing in isn't enough.
+  await settings.evaluate(() => chrome.storage.local.set({ canvasToken: 'test-token' }).then(() => chrome.storage.local.remove('canvasCache')))
+  const byToken = await readTodo()
+  ok('canvas: an access token works too', byToken.rows.length === 4, JSON.stringify(byToken.rows.map((r) => r[0])))
+  await settings.evaluate(() => chrome.storage.local.remove(['canvasToken', 'canvasCache']))
+  // Signed in: Canvas's session cookie is SameSite=None (it has a _legacy_ twin for old browsers).
+  await ctx.addCookies([{ name: '_normandy_session', value: 'x', domain: 'school.instructure.com', path: '/', secure: true, httpOnly: true, sameSite: 'None' }])
+  const todoList = await readTodo()
+  const titles = todoList.rows.map((r) => r[0]).join(' | ')
+  ok('canvas: your browser’s Canvas session is enough (no token)', todoList.rows.length > 0, JSON.stringify(todoList))
+  ok('canvas: late first, then soonest; done, far-off and non-work left out', titles === 'Late lab report | Reading quiz | Problem set 7 | Email Ms. Lee', titles)
+  ok('canvas: late work is marked late, the rest say when', todoList.rows[0]?.[1] === 'late' && todoList.rows[0]?.[2] && todoList.rows[1]?.[1] === 'in 3h', JSON.stringify(todoList.rows.map((r) => r[1])))
+  ok('canvas: each links into Canvas', todoList.rows[0]?.[3] === 'https://school.instructure.com/courses/7/assignments/1', todoList.rows[0]?.[3])
+  ok('canvas: the creature swims around the list', todoList.clipped)
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('canvas-todo', false)))
+  const todoOff = await readTodo()
+  ok('canvas: switched off, nothing in the corner', !todoOff.rows.length && !todoOff.quiet, JSON.stringify(todoOff))
+  await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('canvas-todo', true)))
+  await settings.evaluate(() => chrome.storage.local.set({ ntNext: 0 })) // the creature checks start from the first
 
   /* new tab: rotating creatures and quiet shortcuts */
   const tabs = []

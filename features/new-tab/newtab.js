@@ -1,12 +1,15 @@
-// The new tab page: the next ASCII creature in the rotation, full screen, and
-// your most visited sites as plain names that only appear when the mouse goes
-// to the bottom of the page. Each part follows its own switch in the hub.
+// The new tab page: the next ASCII creature in the rotation, full screen, what's
+// due on Canvas in the top-left corner, and your most visited sites as plain
+// names that only appear when the mouse goes to the bottom of the page. Each
+// part follows its own switch in the hub.
 import { isEnabled } from '../../core/settings.js'
 import { keepToNegativeSpace } from '../../core/negative-space.js'
 import { nextCreature } from './creatures.js'
+import { cached, refresh, dueLabel } from '../canvas-todo/canvas.js'
 
 const canvas = document.querySelector('.creatures')
 const nav = document.querySelector('.shortcuts')
+const todo = document.querySelector('.todo')
 const dark = matchMedia('(prefers-color-scheme: dark)')
 
 /* ---------- the creature ---------- */
@@ -25,12 +28,57 @@ if (await isEnabled('newtab-creatures')) {
   canvas.remove()
 }
 
+// The creature swims around whatever is showing: the to-do list, and the shortcuts while open.
+let open = false
+const reclip = canvas.isConnected
+  ? keepToNegativeSpace(canvas, () => [todo, open ? nav : null], { pad: 16 })
+  : () => {}
+
+/* ---------- Canvas to-do ---------- */
+
+const SHOW = 5
+
+function renderTodo(c) {
+  todo.replaceChildren()
+  if (!c) return (todo.hidden = true)
+  const link = (cls, href, text) => {
+    const a = document.createElement('a')
+    a.className = cls
+    a.href = href
+    a.textContent = text
+    return a
+  }
+  const home = `https://${c.domain}/`
+  if (c.state === 'signed-out') {
+    todo.append(link('todo-quiet', home, 'Sign in to Canvas to see what’s due'))
+  } else if (!c.items.length) {
+    if (c.state === 'ok') todo.append(Object.assign(document.createElement('div'), { className: 'todo-quiet', textContent: 'Nothing due this week' }))
+  } else {
+    for (const it of c.items.slice(0, SHOW)) {
+      const a = link(`todo-row${it.late ? ' late' : ''}`, it.url, '')
+      a.title = it.course ? `${it.title} · ${it.course}` : it.title
+      a.append(
+        Object.assign(document.createElement('span'), { className: 'todo-title', textContent: it.title }),
+        Object.assign(document.createElement('span'), { className: 'todo-due', textContent: dueLabel(it.due) }),
+      )
+      todo.append(a)
+    }
+    if (c.items.length > SHOW) todo.append(link('todo-quiet', home, `+ ${c.items.length - SHOW} more`))
+  }
+  todo.hidden = !todo.childElementCount
+  reclip()
+}
+
+if (await isEnabled('canvas-todo')) {
+  // What we knew last time straight away, then whatever Canvas says now.
+  renderTodo(await cached())
+  refresh().then(renderTodo)
+}
+
 /* ---------- quiet shortcuts ---------- */
 
 const ZONE = 140 // how close to the bottom the mouse has to be
-let open = false
 let closeTimer = 0
-let reclip = () => {}
 
 function setOpen(next) {
   clearTimeout(closeTimer)
@@ -79,7 +127,5 @@ if (await isEnabled('newtab-shortcuts')) {
       { passive: true },
     )
     document.addEventListener('mouseleave', () => setOpen(false))
-    // While they're showing, the creature swims behind them, not over them.
-    if (canvas.isConnected) reclip = keepToNegativeSpace(canvas, () => (open ? [nav] : []), { pad: 16 })
   }
 }

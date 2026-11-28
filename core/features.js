@@ -99,6 +99,14 @@ export const FEATURES = [
     panel: 'features/new-tab/panel.js',
   },
   {
+    id: 'canvas-todo',
+    group: 'new-tab',
+    name: 'Canvas to-do',
+    summary: 'What’s due on Canvas this week, in the corner of every new tab.',
+    enabled: true,
+    panel: 'features/canvas-todo/panel.js',
+  },
+  {
     id: 'newtab-shortcuts',
     group: 'new-tab',
     name: 'Quiet shortcuts',

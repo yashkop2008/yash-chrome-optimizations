@@ -513,3 +513,10 @@ li:hover .icon-btn,
     flex-wrap: wrap;
   }
 }
+
+/* Canvas to-do */
+.canvas-field {
+  width: 240px;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}

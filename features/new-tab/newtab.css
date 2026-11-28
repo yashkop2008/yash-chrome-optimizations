@@ -14,6 +14,57 @@ body {
   opacity: 0.6;
 }
 
+/* What's due on Canvas: plain, dim, top-left. */
+.todo {
+  position: fixed;
+  top: 24px;
+  left: 28px;
+  z-index: 1;
+  display: grid;
+  width: min(340px, calc(100vw - 56px));
+  font-size: var(--t-sm);
+}
+.todo-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 -8px;
+  padding: 4px 8px;
+  border-radius: var(--r-md);
+  color: var(--text-2);
+  text-decoration: none;
+  transition: background var(--dur-hover), color var(--dur-hover);
+}
+.todo-row:hover,
+.todo-row:focus-visible {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.todo-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.todo-due {
+  flex: none;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.todo-row.late .todo-due {
+  color: var(--warning);
+}
+.todo-quiet {
+  padding: 4px 0;
+  color: var(--text-3);
+  font-size: var(--t-xs);
+  text-decoration: none;
+}
+a.todo-quiet:hover {
+  color: var(--text-2);
+}
+
 .shortcuts {
   position: fixed;
   left: 50%;
