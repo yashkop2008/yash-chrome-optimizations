@@ -36,7 +36,7 @@ export async function mount(box) {
     let text
     if (!domain) text = 'Not in this profile’s history. Type your school’s Canvas address.'
     else if (!c || c.domain !== domain) text = 'Checking…'
-    else if (c.state === 'signed-out') text = 'Not signed in to Canvas in this Chrome profile. Sign in here, or use an access token.'
+    else if (c.state === 'signed-out') text = 'Can’t see your Canvas from here yet. Open any Canvas page in this profile and it fills in.'
     const { canvasToken = '' } = await chrome.storage.local.get('canvasToken')
     // Only offered when signing in hasn't been enough (or a token is already in use).
     el['token-row'].hidden = !(canvasToken || (domain && c?.domain === domain && c.state === 'signed-out'))
@@ -46,7 +46,7 @@ export async function mount(box) {
       const late = c.items.filter((i) => i.late).length
       const soon = c.items.length - late
       const parts = [soon ? `${soon} due this week` : 'Nothing due this week', late ? `${late} late` : '']
-      text = `${parts.filter(Boolean).join(', ')} · checked ${ago(c.at)}`
+      text = `${parts.filter(Boolean).join(', ')} · ${c.source === 'page' ? 'from Canvas' : 'checked'} ${ago(c.at)}`
     }
     el.status.textContent = text
   }

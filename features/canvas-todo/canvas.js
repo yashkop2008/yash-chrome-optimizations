@@ -1,12 +1,15 @@
 // Canvas to-do: what's due in the next week, read from Canvas's own planner (the
 // list behind its To Do sidebar) with the session you're already signed in with.
-// Chrome only sends a site's SameSite=None cookies with an extension's requests;
-// Canvas's session cookie is one (it has to be, for the tools it embeds), so being
-// signed in is enough. If a school's Canvas differs, an access token from Canvas's
-// settings works instead.
+// Two ways in, whichever works:
+//   - page.js, on every Canvas page you open: Canvas's own page asks, so your
+//     sign-in always goes along. The list is as fresh as your last Canvas visit.
+//   - from the new tab or hub directly. Chrome sends Canvas's SameSite=None session
+//     cookie with an extension's requests, unless the profile's cookie settings
+//     stop it. An access token from Canvas's settings works here too.
 //
 // Stored: canvasDomain (the address), canvasToken (optional), canvasCache
-// { domain, at, state, items }. state is 'ok', 'signed-out' or 'error'.
+// { domain, at, checked, source: 'page' | 'direct', state, items }.
+// state is 'ok', 'signed-out' or 'error'.
 import { report } from '../../core/health.js'
 
 const FEATURE = 'canvas-todo'
@@ -14,6 +17,8 @@ const DAY = 864e5
 export const AHEAD_DAYS = 7
 const LATE_DAYS = 30 // how far back missing work still counts as late
 const STALE_MS = 5 * 60e3
+// A list read on a Canvas page still counts if the direct way can't get through.
+const PAGE_TRUST_MS = 2 * DAY
 // Planner entries that are work to hand in (announcements and calendar events aren't).
 const TYPES = new Set(['assignment', 'quiz', 'discussion_topic', 'wiki_page', 'planner_note', 'assessment_request'])
 
@@ -112,20 +117,36 @@ export async function cached() {
   return canvasCache || null
 }
 
-// Fetch now (or only when the cache is older than a few minutes) and store the result.
+// The planner a Canvas page read (see page.js), for the Canvas you use.
+export async function storeFromPage(domain, raw) {
+  const { canvasDomain } = await chrome.storage.local.get('canvasDomain')
+  if (canvasDomain !== undefined && canvasDomain !== domain) return // another Canvas, or you cleared it on purpose
+  const now = Date.now()
+  const items = raw.map((r) => toItem(r, domain, now)).filter(Boolean).sort(order)
+  await chrome.storage.local.set({ canvasDomain: domain, canvasCache: { domain, at: now, checked: now, source: 'page', state: 'ok', items } })
+  report(FEATURE, null)
+}
+
+// Ask Canvas now (or only when the last answer is a few minutes old) and store the result.
 export async function refresh({ force = false } = {}) {
   const domain = await getDomain()
   if (!domain) return null
   const prev = await cached()
-  if (!force && prev?.domain === domain && Date.now() - prev.at < STALE_MS) return prev
+  const same = prev?.domain === domain
+  // Only a good answer is reused: after signing in, the very next tab should see it.
+  if (!force && same && prev.state === 'ok' && Date.now() - (prev.checked || prev.at) < STALE_MS) return prev
   const { canvasToken } = await chrome.storage.local.get('canvasToken')
   let next
   try {
-    next = { domain, at: Date.now(), ...(await fetchItems(domain, canvasToken)) }
+    next = { domain, at: Date.now(), checked: Date.now(), source: 'direct', ...(await fetchItems(domain, canvasToken)) }
     report(FEATURE, null)
+    // Can't get through from here, but a Canvas page read the list recently: keep that.
+    if (next.state === 'signed-out' && same && prev.source === 'page' && prev.state === 'ok' && Date.now() - prev.at < PAGE_TRUST_MS) {
+      next = { ...prev, checked: Date.now() }
+    }
   } catch (e) {
     // Offline or Canvas down: keep showing what we had, and say so in the hub.
-    next = { domain, at: Date.now(), state: 'error', error: e.message, items: prev?.domain === domain ? prev.items : [] }
+    next = { domain, at: Date.now(), checked: Date.now(), state: 'error', error: e.message, items: same ? prev.items : [] }
     if (!/Failed to fetch|NetworkError/i.test(e.message)) report(FEATURE, `${e.message} Canvas may have changed its planner.`)
   }
   await chrome.storage.local.set({ canvasCache: next })

@@ -104,6 +104,8 @@ export const FEATURES = [
     name: 'Canvas to-do',
     summary: 'What’s due on Canvas this week, in the corner of every new tab.',
     enabled: true,
+    // Reads the planner from Canvas's own pages, where your sign-in always counts.
+    content: [{ matches: ['https://*.instructure.com/*'], js: ['features/canvas-todo/page.js'], runAt: 'document_idle' }],
     panel: 'features/canvas-todo/panel.js',
   },
   {

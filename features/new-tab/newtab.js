@@ -5,7 +5,7 @@
 import { isEnabled } from '../../core/settings.js'
 import { keepToNegativeSpace } from '../../core/negative-space.js'
 import { nextCreature } from './creatures.js'
-import { cached, refresh, dueLabel } from '../canvas-todo/canvas.js'
+import { cached, refresh, dueLabel, order } from '../canvas-todo/canvas.js'
 
 const canvas = document.querySelector('.creatures')
 const nav = document.querySelector('.shortcuts')
@@ -50,11 +50,13 @@ function renderTodo(c) {
   }
   const home = `https://${c.domain}/`
   if (c.state === 'signed-out') {
-    todo.append(link('todo-quiet', home, 'Sign in to Canvas to see what’s due'))
+    todo.append(link('todo-quiet', home, 'Open Canvas to see what’s due'))
   } else if (!c.items.length) {
     if (c.state === 'ok') todo.append(Object.assign(document.createElement('div'), { className: 'todo-quiet', textContent: 'Nothing due this week' }))
   } else {
-    for (const it of c.items.slice(0, SHOW)) {
+    // Late as of now, not as of when the list was read.
+    const items = c.items.map((it) => ({ ...it, late: it.due < Date.now() })).sort(order)
+    for (const it of items.slice(0, SHOW)) {
       const a = link(`todo-row${it.late ? ' late' : ''}`, it.url, '')
       a.title = it.course ? `${it.title} · ${it.course}` : it.title
       a.append(

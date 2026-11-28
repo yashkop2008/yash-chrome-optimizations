@@ -104,9 +104,14 @@ function buildRelease(dir) {
     plan('assignment', 8, 'Ticked off in Canvas', 30, { planner_override: { marked_complete: true } }),
     plan('announcement', 9, 'Field trip forms', 5),
   ]
+  // A profile whose cookie settings keep the sign-in off the extension's own requests:
+  // only Canvas's own pages (same-origin) get through.
+  let canvasBlocksExtension = false
   await ctx.route(/school\.instructure\.com/, async (r) => {
     const u = new URL(r.request().url())
-    const cookie = (await r.request().allHeaders()).cookie || ''
+    const headers = await r.request().allHeaders()
+    const fromCanvasPage = (headers.referer || '').startsWith('https://school.instructure.com/')
+    const cookie = canvasBlocksExtension && !fromCanvasPage ? '' : headers.cookie || ''
     if (!u.pathname.startsWith('/api/v1/planner/items')) return r.fulfill({ contentType: 'text/html', body: '<html><body>Canvas</body></html>' })
     const auth = (await r.request().allHeaders()).authorization || ''
     if (auth === 'Bearer test-token') return r.fulfill({ contentType: 'application/json', body: JSON.stringify(plannerItems) })
@@ -164,7 +169,7 @@ function buildRelease(dir) {
   await wait(300)
   ok('the arrow opens a group', await settings.isVisible('#youtube .group'))
   const regs = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id))
-  ok('content scripts registered per feature', regs.length === 3, regs.join(', '))
+  ok('content scripts registered per feature', regs.length === 4, regs.join(', '))
   // Flip the YouTube group off and on in quick bursts, as the "All" switch does.
   const burst = await settings.evaluate(async () => {
     const m = await import('../core/settings.js')
@@ -352,7 +357,7 @@ function buildRelease(dir) {
   const signedOut = await readTodo()
   const found = await settings.evaluate(() => chrome.storage.local.get('canvasDomain').then((s) => s.canvasDomain))
   ok('canvas: finds your school’s Canvas in history', found === 'school.instructure.com', found)
-  ok('canvas: signed out, it says so instead of listing', !signedOut.rows.length && /Sign in to Canvas/.test(signedOut.quiet), JSON.stringify(signedOut))
+  ok('canvas: signed out, it says so instead of listing', !signedOut.rows.length && /Open Canvas/.test(signedOut.quiet), JSON.stringify(signedOut))
   // A token, for a Canvas where signing in isn't enough.
   await settings.evaluate(() => chrome.storage.local.set({ canvasToken: 'test-token' }).then(() => chrome.storage.local.remove('canvasCache')))
   const byToken = await readTodo()
@@ -367,6 +372,30 @@ function buildRelease(dir) {
   ok('canvas: late work is marked late, the rest say when', todoList.rows[0]?.[1] === 'late' && todoList.rows[0]?.[2] && todoList.rows[1]?.[1] === 'in 3h', JSON.stringify(todoList.rows.map((r) => r[1])))
   ok('canvas: each links into Canvas', todoList.rows[0]?.[3] === 'https://school.instructure.com/courses/7/assignments/1', todoList.rows[0]?.[3])
   ok('canvas: the creature swims around the list', todoList.clipped)
+  // A profile that won't send the sign-in with the extension's requests: opening Canvas fills it in.
+  canvasBlocksExtension = true
+  await settings.evaluate(() => chrome.storage.local.remove('canvasCache'))
+  const blocked = await readTodo()
+  const canvasTab = await ctx.newPage()
+  await canvasTab.goto('https://school.instructure.com/courses/7').catch(() => {})
+  await wait(1500)
+  await canvasTab.close()
+  const fromPage = await settings.evaluate(() => chrome.storage.local.get('canvasCache').then((s) => s.canvasCache))
+  const afterVisit = await readTodo()
+  ok('canvas: where the extension can’t get through, it says to open Canvas', !blocked.rows.length && /Open Canvas/.test(blocked.quiet), JSON.stringify(blocked))
+  ok('canvas: opening any Canvas page reads the list there', fromPage?.source === 'page' && fromPage.items.length === 4, JSON.stringify(fromPage && { source: fromPage.source, n: fromPage.items.length }))
+  ok('canvas: and the new tab shows it, even though its own check is still turned away', afterVisit.rows.map((r) => r[0]).join(' | ') === titles, JSON.stringify(afterVisit.rows.map((r) => r[0])))
+  canvasBlocksExtension = false
+  // Signed out a moment ago, signed in now: the next new tab shouldn't still say signed out.
+  await settings.evaluate(() => chrome.storage.local.set({ canvasCache: { domain: 'school.instructure.com', at: Date.now(), checked: Date.now(), source: 'direct', state: 'signed-out', items: [] } }))
+  const justSignedIn = await readTodo()
+  ok('canvas: a “signed out” answer isn’t kept once you sign in', justSignedIn.rows.length === 4, JSON.stringify(justSignedIn))
+  await settings.evaluate(() => chrome.storage.local.set({ canvasDomain: 'canvas.myschool.edu' }))
+  await wait(500)
+  const own = await settings.evaluate(async () => (await chrome.scripting.getRegisteredContentScripts({ ids: ['canvas:own-domain'] }))[0]?.matches?.join() || '')
+  ok('canvas: a school’s own Canvas address gets the page script too', own === 'https://canvas.myschool.edu/*', own)
+  await settings.evaluate(() => chrome.storage.local.set({ canvasDomain: 'school.instructure.com' }))
+  await wait(300)
   await settings.evaluate(() => import('../core/settings.js').then((m) => m.setEnabled('canvas-todo', false)))
   const todoOff = await readTodo()
   ok('canvas: switched off, nothing in the corner', !todoOff.rows.length && !todoOff.quiet, JSON.stringify(todoOff))
